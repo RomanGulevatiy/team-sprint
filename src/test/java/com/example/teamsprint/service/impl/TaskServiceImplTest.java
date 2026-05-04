@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -130,5 +131,74 @@ class TaskServiceImplTest {
         assertThat(result.getDescription()).isNull();
         assertThat(result.getSprintId()).isEqualTo(9L);
     }
-}
 
+    @Test
+    @DisplayName("getTasksBySprintId throws EntityNotFoundException when sprint does not exist")
+    void getTasksBySprintId_throwsEntityNotFoundException_whenSprintMissing() {
+        when(sprintRepository.existsById(22L)).thenReturn(false);
+
+        assertThatThrownBy(() -> taskService.getTasksBySprintId(22L))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Sprint not found with ID: 22");
+    }
+
+    @Test
+    @DisplayName("getTasksBySprintId returns empty list when no tasks exist")
+    void getTasksBySprintId_returnsEmptyList_whenNoTasksExist() {
+        when(sprintRepository.existsById(5L)).thenReturn(true);
+        when(taskRepository.findBySprintId(5L)).thenReturn(List.of());
+
+        var result = taskService.getTasksBySprintId(5L);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("getTasksBySprintId maps task entities to responses")
+    void getTasksBySprintId_mapsTaskEntitiesToResponses() {
+        Sprint sprint = Sprint.builder()
+                .id(11L)
+                .title("Sprint")
+                .status(SprintStatus.ACTIVE)
+                .build();
+
+        LocalDateTime now = LocalDateTime.of(2026, 1, 7, 10, 0, 0);
+        Task task1 = Task.builder()
+                .id(1L)
+                .title("Task A")
+                .description("First")
+                .priority(TaskPriority.LOW)
+                .status(TaskStatus.TODO)
+                .sprint(sprint)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        Task task2 = Task.builder()
+                .id(2L)
+                .title("Task B")
+                .description("Second")
+                .priority(TaskPriority.HIGH)
+                .status(TaskStatus.IN_PROGRESS)
+                .sprint(sprint)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        when(sprintRepository.existsById(11L)).thenReturn(true);
+        when(taskRepository.findBySprintId(11L)).thenReturn(List.of(task1, task2));
+
+        var result = taskService.getTasksBySprintId(11L);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.getFirst().getId()).isEqualTo(1L);
+        assertThat(result.getFirst().getTitle()).isEqualTo("Task A");
+        assertThat(result.getFirst().getPriority()).isEqualTo(TaskPriority.LOW);
+        assertThat(result.getFirst().getStatus()).isEqualTo(TaskStatus.TODO);
+        assertThat(result.getFirst().getSprintId()).isEqualTo(11L);
+        assertThat(result.get(1).getId()).isEqualTo(2L);
+        assertThat(result.get(1).getTitle()).isEqualTo("Task B");
+        assertThat(result.get(1).getPriority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(result.get(1).getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
+        assertThat(result.get(1).getSprintId()).isEqualTo(11L);
+    }
+}

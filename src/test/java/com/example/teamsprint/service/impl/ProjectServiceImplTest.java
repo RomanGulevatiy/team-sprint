@@ -316,4 +316,3 @@ class ProjectServiceImplTest {
         assertThat(result.getUpdatedAt()).isEqualTo(updatedAt);
     }
 }
-

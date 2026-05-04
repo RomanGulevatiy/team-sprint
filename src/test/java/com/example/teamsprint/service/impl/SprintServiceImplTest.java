@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -137,5 +138,70 @@ class SprintServiceImplTest {
         assertThat(result.getDueDate()).isNull();
         assertThat(result.getProjectId()).isEqualTo(7L);
     }
-}
 
+    @Test
+    @DisplayName("getSprintsByProjectId throws EntityNotFoundException when project does not exist")
+    void getSprintsByProjectId_throwsEntityNotFoundException_whenProjectMissing() {
+        when(projectRepository.existsById(31L)).thenReturn(false);
+
+        assertThatThrownBy(() -> sprintService.getSprintsByProjectId(31L))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Project not found with ID: 31");
+    }
+
+    @Test
+    @DisplayName("getSprintsByProjectId returns empty list when no sprints exist")
+    void getSprintsByProjectId_returnsEmptyList_whenNoSprintsExist() {
+        when(projectRepository.existsById(4L)).thenReturn(true);
+        when(sprintRepository.findByProjectId(4L)).thenReturn(List.of());
+
+        var result = sprintService.getSprintsByProjectId(4L);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("getSprintsByProjectId maps sprint entities to responses")
+    void getSprintsByProjectId_mapsSprintEntitiesToResponses() {
+        Project project = Project.builder()
+                .id(12L)
+                .title("Project")
+                .status(ProjectStatus.OPEN)
+                .build();
+
+        LocalDateTime now = LocalDateTime.of(2026, 1, 8, 9, 0, 0);
+        Sprint sprint1 = Sprint.builder()
+                .id(1L)
+                .title("Sprint A")
+                .description("First")
+                .status(SprintStatus.ACTIVE)
+                .project(project)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        Sprint sprint2 = Sprint.builder()
+                .id(2L)
+                .title("Sprint B")
+                .description("Second")
+                .status(SprintStatus.PLANNED)
+                .project(project)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        when(projectRepository.existsById(12L)).thenReturn(true);
+        when(sprintRepository.findByProjectId(12L)).thenReturn(List.of(sprint1, sprint2));
+
+        var result = sprintService.getSprintsByProjectId(12L);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.getFirst().getId()).isEqualTo(1L);
+        assertThat(result.getFirst().getTitle()).isEqualTo("Sprint A");
+        assertThat(result.getFirst().getStatus()).isEqualTo(SprintStatus.ACTIVE);
+        assertThat(result.getFirst().getProjectId()).isEqualTo(12L);
+        assertThat(result.get(1).getId()).isEqualTo(2L);
+        assertThat(result.get(1).getTitle()).isEqualTo("Sprint B");
+        assertThat(result.get(1).getStatus()).isEqualTo(SprintStatus.PLANNED);
+        assertThat(result.get(1).getProjectId()).isEqualTo(12L);
+    }
+}
