@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -34,6 +36,20 @@ public class TaskServiceImpl implements TaskService {
         Task savedTask = taskRepository.save(task);
         log.info("Created new task with ID: {}", savedTask.getId());
         return mapToTaskResponse(savedTask);
+    }
+
+    @Override
+    public List<TaskResponse> getTasksBySprintId(Long sprintId) {
+
+        if(!sprintRepository.existsById(sprintId)) {
+            throw new EntityNotFoundException("Sprint not found with ID: " + sprintId);
+        }
+        List<Task> tasks = taskRepository.findBySprintId(sprintId);
+        log.info("Retrieved {} tasks for sprint ID: {}", tasks.size(), sprintId);
+
+        return tasks.stream()
+                .map(this::mapToTaskResponse)
+                .toList();
     }
 
     private Task mapToTaskEntity(TaskRequest taskRequest) {

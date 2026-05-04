@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -34,6 +36,21 @@ public class SprintServiceImpl implements SprintService {
         Sprint savedSprint = sprintRepository.save(sprint);
         log.info("Created new sprint with ID: {}", savedSprint.getId());
         return mapToSprintResponse(savedSprint);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<SprintResponse> getSprintsByProjectId(Long projectId) {
+
+        if(!projectRepository.existsById(projectId)) {
+            throw new EntityNotFoundException("Project not found with ID: " + projectId);
+        }
+        List<Sprint> sprints = sprintRepository.findByProjectId(projectId);
+        log.info("Retrieved {} sprints for project ID: {}", sprints.size(), projectId);
+
+        return sprints.stream()
+                .map(this::mapToSprintResponse)
+                .toList();
     }
 
     private Sprint mapToSprintEntity(SprintRequest sprintRequest) {

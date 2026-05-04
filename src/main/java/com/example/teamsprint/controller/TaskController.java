@@ -5,7 +5,10 @@ import com.example.teamsprint.dto.TaskResponse;
 import com.example.teamsprint.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -15,8 +18,15 @@ public class TaskController {
     private final TaskService taskService;
 
     @PostMapping("sprints/{sprintId}/tasks")
+    @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse createTask(@PathVariable Long sprintId,
                                    @Valid @RequestBody TaskRequest taskRequest) {
         return taskService.createTask(sprintId, taskRequest);
+    }
+
+    @GetMapping("sprints/{sprintId}/tasks")
+    @ResponseStatus(HttpStatus.OK)
+    public List<TaskResponse> getTasksBySprintId(@PathVariable Long sprintId) {
+        return taskService.getTasksBySprintId(sprintId);
     }
 }
