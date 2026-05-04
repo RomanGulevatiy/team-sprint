@@ -31,10 +31,10 @@ public class Sprint extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private SprintStatus status;
 
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "start_date")
     private LocalDateTime startDate;
 
-    @Column(name = "due_date", nullable = false)
+    @Column(name = "due_date")
     private LocalDateTime dueDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
