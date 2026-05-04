@@ -14,13 +14,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.hasSize;
 
 @WebMvcTest(SprintController.class)
 class SprintControllerTest {
@@ -130,5 +133,42 @@ class SprintControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
-}
 
+    @Test
+    @DisplayName("getSprintsByProjectId returns 200 with sprint list")
+    void getSprintsByProjectId_returnsOkWithSprintList() throws Exception {
+        LocalDateTime now = LocalDateTime.of(2026, 1, 3, 9, 0, 0);
+        List<SprintResponse> responses = List.of(
+                SprintResponse.builder()
+                        .id(1L)
+                        .title("Sprint A")
+                        .description("First")
+                        .status(SprintStatus.ACTIVE)
+                        .projectId(6L)
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .build(),
+                SprintResponse.builder()
+                        .id(2L)
+                        .title("Sprint B")
+                        .description("Second")
+                        .status(SprintStatus.PLANNED)
+                        .projectId(6L)
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .build()
+        );
+
+        when(sprintService.getSprintsByProjectId(6L)).thenReturn(responses);
+
+        mockMvc.perform(get("/api/projects/6/sprints"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].title").value("Sprint A"))
+                .andExpect(jsonPath("$[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].title").value("Sprint B"))
+                .andExpect(jsonPath("$[1].status").value("PLANNED"));
+    }
+}

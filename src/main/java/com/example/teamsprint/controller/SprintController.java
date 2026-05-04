@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -20,5 +22,11 @@ public class SprintController {
     public SprintResponse createSprint(@PathVariable Long projectId,
                                        @Valid @RequestBody SprintRequest sprintRequest) {
         return sprintService.createSprint(projectId, sprintRequest);
+    }
+
+    @GetMapping("projects/{projectId}/sprints")
+    @ResponseStatus(HttpStatus.OK)
+    public List<SprintResponse> getSprintsByProjectId(@PathVariable Long projectId) {
+        return sprintService.getSprintsByProjectId(projectId);
     }
 }
