@@ -1,5 +1,6 @@
 package com.example.teamsprint.controller;
 
+import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.enums.ProjectStatus;
@@ -37,41 +38,36 @@ class ProjectControllerTest {
     private ProjectService projectService;
 
     @Test
-    @DisplayName("getAllProjects returns 200 with project list")
-    void getAllProjects_returnsOkWithProjectList() throws Exception {
-        LocalDateTime now = LocalDateTime.of(2026, 1, 1, 10, 0, 0);
-        List<ProjectResponse> responses = List.of(
+    @DisplayName("getAllProjects returns 200 with paginated project response")
+    void getAllProjects_returnsOkWithPaginatedResponse() throws Exception {
+        List<ProjectResponse> content = List.of(
                 ProjectResponse.builder()
                         .id(1L)
                         .title("Project A")
-                        .description("First")
                         .status(ProjectStatus.OPEN)
-                        .createdAt(now)
-                        .updatedAt(now)
-                        .build(),
-                ProjectResponse.builder()
-                        .id(2L)
-                        .title("Project B")
-                        .description("Second")
-                        .status(ProjectStatus.CLOSED)
-                        .createdAt(now)
-                        .updatedAt(now)
                         .build()
         );
 
-        when(projectService.getAllProjects()).thenReturn(responses);
+        PageResponse<ProjectResponse> pageResponse = PageResponse.<ProjectResponse>builder()
+                .content(content)
+                .pageNumber(0)
+                .pageSize(10)
+                .totalElements(1L)
+                .totalPages(1)
+                .build();
 
-        mockMvc.perform(get("/api/projects"))
+        when(projectService.getAllProjects(0, 10)).thenReturn(pageResponse);
+
+        mockMvc.perform(get("/api/projects")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Project A"))
-                .andExpect(jsonPath("$[0].description").value("First"))
-                .andExpect(jsonPath("$[0].status").value("OPEN"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].title").value("Project B"))
-                .andExpect(jsonPath("$[1].description").value("Second"))
-                .andExpect(jsonPath("$[1].status").value("CLOSED"));
+                .andExpect(jsonPath("$.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageSize").value(10))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Project A"));
     }
 
     @Test

@@ -1,19 +1,24 @@
 package com.example.teamsprint.service.impl;
 
+import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.enums.ProjectStatus;
 import com.example.teamsprint.repository.ProjectRepository;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,101 +36,42 @@ class ProjectServiceImplTest {
     private ProjectServiceImpl projectService;
 
     @Test
-    @DisplayName("getAllProjects returns empty list when no projects exist")
-    void getAllProjects_returnsEmptyList_whenNoProjectsExist() {
-        when(projectRepository.findAll()).thenReturn(new ArrayList<>());
+    @DisplayName("getAllProjects returns empty PageResponse when no projects exist")
+    void getAllProjects_returnsEmptyPageResponse_whenNoProjectsExist() {
+        Page<Project> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(projectRepository.findAll(any(PageRequest.class))).thenReturn(emptyPage);
 
-        var result = projectService.getAllProjects();
+        PageResponse<ProjectResponse> result = projectService.getAllProjects(0, 10);
 
-        assertThat(result).isEmpty();
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+        assertThat(result.getPageNumber()).isZero();
     }
 
     @Test
-    @DisplayName("getAllProjects maps projects to responses when projects exist")
-    void getAllProjects_returnsMappedProjectResponses_whenProjectsExist() {
+    @DisplayName("getAllProjects returns paginated mapped projects")
+    void getAllProjects_returnsPaginatedMappedProjects() {
         LocalDateTime now = LocalDateTime.now();
-        Project project1 = Project.builder()
+        Project project = Project.builder()
                 .id(1L)
                 .title("Project 1")
-                .description("Description 1")
                 .status(ProjectStatus.OPEN)
                 .createdAt(now)
-                .updatedAt(now)
                 .build();
 
-        Project project2 = Project.builder()
-                .id(2L)
-                .title("Project 2")
-                .description("Description 2")
-                .status(ProjectStatus.CLOSED)
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<Project> projectPage = new PageImpl<>(List.of(project), pageRequest, 1);
 
-        when(projectRepository.findAll()).thenReturn(List.of(project1, project2));
+        when(projectRepository.findAll(any(PageRequest.of(0, 10).getClass()))).thenReturn(projectPage);
 
-        var result = projectService.getAllProjects();
+        var result = projectService.getAllProjects(0, 10);
 
-        assertThat(result)
-                .hasSize(2)
-                .extracting(ProjectResponse::getId)
-                .containsExactly(1L, 2L);
-        assertThat(result)
-                .extracting(ProjectResponse::getTitle)
-                .containsExactly("Project 1", "Project 2");
-        assertThat(result)
-                .extracting(ProjectResponse::getStatus)
-                .containsExactly(ProjectStatus.OPEN, ProjectStatus.CLOSED);
-    }
-
-    @Test
-    @DisplayName("getAllProjects maps all fields correctly from project entity")
-    void getAllProjects_mapsAllFieldsCorrectly_fromProjectEntity() {
-        LocalDateTime createdAt = LocalDateTime.of(2026, 1, 1, 10, 0, 0);
-        LocalDateTime updatedAt = LocalDateTime.of(2026, 1, 2, 15, 30, 0);
-
-        Project project = Project.builder()
-                .id(5L)
-                .title("Complete Project")
-                .description("Full description with details")
-                .status(ProjectStatus.OPEN)
-                .createdAt(createdAt)
-                .updatedAt(updatedAt)
-                .build();
-
-        when(projectRepository.findAll()).thenReturn(List.of(project));
-
-        var result = projectService.getAllProjects();
-
-        assertThat(result).hasSize(1);
-        ProjectResponse response = result.getFirst();
-        assertThat(response.getId()).isEqualTo(5L);
-        assertThat(response.getTitle()).isEqualTo("Complete Project");
-        assertThat(response.getDescription()).isEqualTo("Full description with details");
-        assertThat(response.getStatus()).isEqualTo(ProjectStatus.OPEN);
-        assertThat(response.getCreatedAt()).isEqualTo(createdAt);
-        assertThat(response.getUpdatedAt()).isEqualTo(updatedAt);
-    }
-
-    @Test
-    @DisplayName("getAllProjects handles project with null description")
-    void getAllProjects_handlesProjectWithNullDescription() {
-        LocalDateTime now = LocalDateTime.now();
-        Project project = Project.builder()
-                .id(1L)
-                .title("Project Without Description")
-                .description(null)
-                .status(ProjectStatus.OPEN)
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
-
-        when(projectRepository.findAll()).thenReturn(List.of(project));
-
-        var result = projectService.getAllProjects();
-
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getDescription()).isNull();
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Project 1");
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getPageSize()).isEqualTo(10);
+        assertThat(result.getPageNumber()).isEqualTo(0);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.example.teamsprint.service.impl;
 
+import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.Project;
@@ -7,6 +8,8 @@ import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +24,22 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<ProjectResponse> getAllProjects() {
-        return projectRepository.findAll().stream()
+    public PageResponse<ProjectResponse> getAllProjects(int page, int size) {
+        Page<Project> projectPage = projectRepository.findAll(
+                PageRequest.of(page, size)
+        );
+
+        List<ProjectResponse> content = projectPage.getContent().stream()
                 .map(this::mapToProjectResponse)
                 .toList();
+
+        return PageResponse.<ProjectResponse>builder()
+                .content(content)
+                .pageNumber(projectPage.getNumber())
+                .pageSize(projectPage.getSize())
+                .totalElements(projectPage.getTotalElements())
+                .totalPages(projectPage.getTotalPages())
+                .build();
     }
 
     @Transactional
