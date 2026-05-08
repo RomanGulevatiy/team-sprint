@@ -30,7 +30,7 @@ public class TaskController {
         return taskService.getTasksBySprintId(sprintId);
     }
 
-    @PostMapping("/tasks/{taskId}/assign/{userId}")
+    @PatchMapping("/tasks/{taskId}/assign/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public TaskResponse assignTask(@PathVariable Long taskId, @PathVariable Long userId) {
         return taskService.assignTaskToUser(taskId, userId);
