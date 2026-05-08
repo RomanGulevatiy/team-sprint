@@ -1,14 +1,17 @@
 package com.example.teamsprint.service.impl;
 
 import com.example.teamsprint.dto.TaskRequest;
+import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.Task;
+import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.repository.TaskRepository;
+import com.example.teamsprint.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +37,9 @@ class TaskServiceImplTest {
 
     @Mock
     private TaskRepository taskRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private TaskServiceImpl taskService;
@@ -200,5 +207,59 @@ class TaskServiceImplTest {
         assertThat(result.get(1).getPriority()).isEqualTo(TaskPriority.HIGH);
         assertThat(result.get(1).getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
         assertThat(result.get(1).getSprintId()).isEqualTo(11L);
+    }
+
+    @Test
+    @DisplayName("assignTaskToUser successfully assigns user when in same project")
+    void assignTaskToUser_success() {
+        Long taskId = 1L;
+        Long userId = 10L;
+        Long projectId = 5L;
+
+        Project project = Project.builder().id(projectId).build();
+        Sprint sprint = Sprint.builder().id(2L).project(project).build();
+        Task task = Task.builder().id(taskId).sprint(sprint).build();
+
+        User user = User.builder()
+                .id(userId)
+                .projects(new java.util.HashSet<>(List.of(project)))
+                .build();
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        taskService.assignTaskToUser(taskId, userId);
+
+        assertThat(task.getAssignee()).isEqualTo(user);
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    @DisplayName("assignTaskToUser throws IllegalArgumentException when user not in project")
+    void assignTaskToUser_throwsException_whenUserNotInProject() {
+        Project projectA = Project.builder().id(1L).build();
+        Project projectB = Project.builder().id(2L).build();
+
+        Sprint sprint = Sprint.builder().project(projectA).build();
+        Task task = Task.builder().id(1L).sprint(sprint).build();
+
+        User user = User.builder().id(10L).projects(new java.util.HashSet<>(List.of(projectB))).build();
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> taskService.assignTaskToUser(1L, 10L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is not part of the project associated with this task");
+    }
+
+    @Test
+    @DisplayName("assignTaskToUser throws EntityNotFoundException when task missing")
+    void assignTaskToUser_throwsException_whenTaskNotFound() {
+        when(taskRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.assignTaskToUser(1L, 10L))
+                .isInstanceOf(EntityNotFoundException.class);
     }
 }

@@ -20,8 +20,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.hamcrest.Matchers.hasSize;
@@ -194,5 +193,23 @@ class TaskControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/tasks/{taskId}/assign/{userId} returns 200")
+    void assignTaskToUser_returnsOk() throws Exception {
+        Long taskId = 1L;
+        Long userId = 10L;
+        TaskResponse response = TaskResponse.builder()
+                .id(taskId)
+                .title("Updated Task")
+                .build();
+
+        when(taskService.assignTaskToUser(taskId, userId)).thenReturn(response);
+
+        mockMvc.perform(patch("/api/tasks/" + taskId + "/assign/" + userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskId))
+                .andExpect(jsonPath("$.title").value("Updated Task"));
     }
 }

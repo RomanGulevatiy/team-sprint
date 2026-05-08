@@ -53,6 +53,12 @@ public class SprintServiceImpl implements SprintService {
                 .toList();
     }
 
+    /**
+     * Helper method to map SprintRequest DTO to Sprint entity
+     *
+     * @param sprintRequest the SprintRequest DTO to be mapped
+     * @return the corresponding Sprint entity
+     */
     private Sprint mapToSprintEntity(SprintRequest sprintRequest) {
         return Sprint.builder()
                 .title(sprintRequest.getTitle())
@@ -63,6 +69,12 @@ public class SprintServiceImpl implements SprintService {
                 .build();
     }
 
+    /**
+     * Helper method to map Sprint entity to SprintResponse DTO
+     *
+     * @param sprint the Sprint entity to be mapped
+     * @return the corresponding SprintResponse DTO
+     */
     private SprintResponse mapToSprintResponse(Sprint  sprint) {
         return SprintResponse.builder()
                 .id(sprint.getId())

@@ -19,4 +19,15 @@ public class GlobalExceptionHandler {
                 .timestamp(java.time.LocalDateTime.now())
                 .build();
     }
+
+    @ExceptionHandler(UserNotInProjectException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleUserNotInProjectException(UserNotInProjectException exception) {
+        return ErrorResponse.builder()
+                .error("User Not In Project")
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(exception.getMessage())
+                .timestamp(java.time.LocalDateTime.now())
+                .build();
+    }
 }
