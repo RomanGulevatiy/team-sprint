@@ -10,4 +10,6 @@ public interface TaskService {
     TaskResponse createTask(Long sprintId, TaskRequest taskRequest);
 
     List<TaskResponse> getTasksBySprintId(Long sprintId);
+
+    TaskResponse assignTaskToUser(Long taskId, Long userId);
 }

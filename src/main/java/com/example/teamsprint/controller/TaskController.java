@@ -29,4 +29,10 @@ public class TaskController {
     public List<TaskResponse> getTasksBySprintId(@PathVariable Long sprintId) {
         return taskService.getTasksBySprintId(sprintId);
     }
+
+    @PostMapping("/tasks/{taskId}/assign/{userId}")
+    @ResponseStatus(HttpStatus.OK)
+    public TaskResponse assignTask(@PathVariable Long taskId, @PathVariable Long userId) {
+        return taskService.assignTaskToUser(taskId, userId);
+    }
 }

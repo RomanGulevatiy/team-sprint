@@ -4,9 +4,11 @@ import com.example.teamsprint.dto.TaskRequest;
 import com.example.teamsprint.dto.TaskResponse;
 import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.Task;
+import com.example.teamsprint.entity.User;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.repository.TaskRepository;
+import com.example.teamsprint.repository.UserRepository;
 import com.example.teamsprint.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ public class TaskServiceImpl implements TaskService {
 
     private final SprintRepository sprintRepository;
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     @Override
@@ -38,6 +41,7 @@ public class TaskServiceImpl implements TaskService {
         return mapToTaskResponse(savedTask);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<TaskResponse> getTasksBySprintId(Long sprintId) {
 
@@ -52,6 +56,32 @@ public class TaskServiceImpl implements TaskService {
                 .toList();
     }
 
+    @Transactional
+    @Override
+    public TaskResponse assignTaskToUser(Long taskId, Long userId) {
+
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
+
+        if(!user.getProjects().contains(task.getSprint().getProject())) {
+            throw new IllegalArgumentException("User with ID: " + userId + " is not part of the project associated with this task.");
+        }
+
+        task.setAssignee(user);
+        Task updatedTask = taskRepository.save(task);
+        log.info("Assigned task ID: {} to user ID: {}", taskId, userId);
+        return mapToTaskResponse(updatedTask);
+    }
+
+    /**
+     * Helper method to map TaskRequest DTO to Task entity
+     *
+     * @param taskRequest the TaskRequest DTO to be mapped
+     * @return the corresponding Task entity
+     */
     private Task mapToTaskEntity(TaskRequest taskRequest) {
         return Task.builder()
                 .title(taskRequest.getTitle())
@@ -61,6 +91,12 @@ public class TaskServiceImpl implements TaskService {
                 .build();
     }
 
+    /**
+     * Helper method to map Task entity to TaskResponse DTO
+     *
+     * @param task the Task entity to be mapped
+     * @return the corresponding TaskResponse DTO
+     */
     private TaskResponse mapToTaskResponse(Task task) {
         return TaskResponse.builder()
                 .id(task.getId())
