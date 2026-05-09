@@ -9,6 +9,7 @@ import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
+import com.example.teamsprint.exception.UserNotInProjectException;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.repository.TaskRepository;
 import com.example.teamsprint.repository.UserRepository;
@@ -250,7 +251,7 @@ class TaskServiceImplTest {
         when(userRepository.findById(10L)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> taskService.assignTaskToUser(1L, 10L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(UserNotInProjectException.class)
                 .hasMessageContaining("is not part of the project associated with this task");
     }
 
