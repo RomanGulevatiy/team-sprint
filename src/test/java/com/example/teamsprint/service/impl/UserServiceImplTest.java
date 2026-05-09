@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -32,13 +33,20 @@ class UserServiceImplTest {
     @Mock
     private ProjectRepository projectRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UserServiceImpl userService;
 
     @Test
-    @DisplayName("register should save user and return response")
+    @DisplayName("register should encode password, save user and return response")
     void register_savesUserAndReturnsResponse() {
         RegisterRequest request = new RegisterRequest("testuser", "test@mail.com", "pass");
+
+        String encodedPassword = "encoded_password_123";
+        when(passwordEncoder.encode(request.getPassword())).thenReturn(encodedPassword);
+
         User savedUser = User.builder()
                 .id(1L)
                 .username("testuser")
@@ -51,6 +59,7 @@ class UserServiceImplTest {
 
         assertThat(result.getUsername()).isEqualTo("testuser");
         assertThat(result.getId()).isEqualTo(1L);
+        verify(passwordEncoder).encode("pass");
         verify(userRepository).save(any(User.class));
     }
 
