@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -52,13 +53,13 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/projects/{projectId}/users/{userId} should return 200 OK")
+    @DisplayName("PATCH /api/projects/{projectId}/users/{userId} should return 200 OK")
     void assignUserToProject_returnsOk() throws Exception {
         UserResponse response = UserResponse.builder().id(1L).username("john").build();
 
         when(userService.assignUserToProject(anyLong(), anyLong())).thenReturn(response);
 
-        mockMvc.perform(post("/api/projects/10/users/1"))
+        mockMvc.perform(patch("/api/projects/10/users/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.username").value("john"));
