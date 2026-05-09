@@ -4,11 +4,14 @@ import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.service.ProjectService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Project Management", description = "Endpoints for managing projects")
 @RestController
 @RequestMapping("/api/projects")
 @RequiredArgsConstructor
@@ -16,6 +19,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
+    @Operation(summary = "Get all projects with pagination", description = "Returns a paginated list of all projects")
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public PageResponse<ProjectResponse> getAllProjects(@RequestParam(defaultValue = "0") int page,
@@ -23,6 +27,7 @@ public class ProjectController {
         return projectService.getAllProjects(page, size);
     }
 
+    @Operation(summary = "Create a new project", description = "Creates a new project with the provided details")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProjectResponse createProject(@Valid @RequestBody ProjectRequest projectRequest) {
