@@ -10,6 +10,7 @@ import com.example.teamsprint.repository.UserRepository;
 import com.example.teamsprint.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     @Override
@@ -72,7 +74,7 @@ public class UserServiceImpl implements UserService {
         return User.builder()
                 .username(registerRequest.getUsername())
                 .email(registerRequest.getEmail())
-                .password(registerRequest.getPassword()) // TODO: Implement password hashing before saving to the database
+                .password(passwordEncoder.encode(registerRequest.getPassword()))
                 .build();
     }
 }
