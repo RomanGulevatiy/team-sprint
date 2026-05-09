@@ -6,6 +6,7 @@ import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.Task;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.exception.EntityNotFoundException;
+import com.example.teamsprint.exception.UserNotInProjectException;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.repository.TaskRepository;
 import com.example.teamsprint.repository.UserRepository;
@@ -67,7 +68,7 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
 
         if(!user.getProjects().contains(task.getSprint().getProject())) {
-            throw new IllegalArgumentException("User with ID: " + userId + " is not part of the project associated with this task.");
+            throw new UserNotInProjectException("User with ID: " + userId + " is not part of the project associated with this task.");
         }
 
         task.setAssignee(user);
