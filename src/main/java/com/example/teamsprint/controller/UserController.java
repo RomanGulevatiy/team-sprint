@@ -21,7 +21,7 @@ public class UserController {
         return userService.register(registerRequest);
     }
 
-    @PostMapping("/projects/{projectId}/users/{userId}")
+    @PatchMapping("/projects/{projectId}/users/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public UserResponse assignUserToProject(@PathVariable Long userId, @PathVariable Long projectId) {
         return userService.assignUserToProject(userId, projectId);
