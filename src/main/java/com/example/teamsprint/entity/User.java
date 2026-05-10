@@ -1,5 +1,6 @@
 package com.example.teamsprint.entity;
 
+import com.example.teamsprint.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,10 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Table(name = "users")
 @Entity
@@ -29,6 +27,10 @@ public class User extends BaseEntity {
 
     @Column(name = "password", nullable = false)
     private String password;
+
+    @Column(name = "role", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
 
     @ManyToMany
     @JoinTable(
