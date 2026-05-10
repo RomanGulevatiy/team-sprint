@@ -1,5 +1,6 @@
 package com.example.teamsprint.dto;
 
+import com.example.teamsprint.entity.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class UserResponse {
     private Long id;
     private String username;
     private String email;
+    private UserRole role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

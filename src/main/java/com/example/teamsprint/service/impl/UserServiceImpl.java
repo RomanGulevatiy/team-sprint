@@ -4,6 +4,7 @@ import com.example.teamsprint.dto.RegisterRequest;
 import com.example.teamsprint.dto.UserResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
+import com.example.teamsprint.entity.enums.UserRole;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.UserRepository;
@@ -59,6 +60,7 @@ public class UserServiceImpl implements UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
@@ -75,6 +77,7 @@ public class UserServiceImpl implements UserService {
                 .username(registerRequest.getUsername())
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .role(UserRole.USER)
                 .build();
     }
 }
