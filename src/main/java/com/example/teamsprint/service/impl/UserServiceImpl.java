@@ -1,13 +1,18 @@
 package com.example.teamsprint.service.impl;
 
+import com.example.teamsprint.dto.AuthResponse;
+import com.example.teamsprint.dto.LoginRequest;
 import com.example.teamsprint.dto.RegisterRequest;
 import com.example.teamsprint.dto.UserResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.UserRole;
 import com.example.teamsprint.exception.EntityNotFoundException;
+import com.example.teamsprint.exception.InvalidPasswordException;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.UserRepository;
+import com.example.teamsprint.security.JwtService;
+import com.example.teamsprint.security.UserPrincipal;
 import com.example.teamsprint.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,15 +28,29 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Transactional
     @Override
-    public UserResponse register(RegisterRequest registerRequest) {
+    public AuthResponse register(RegisterRequest registerRequest) {
         User user = mapToUserEntity(registerRequest);
 
         User savedUser = userRepository.save(user);
         log.info("Registered new user with ID: {}", savedUser.getId());
-        return mapToUserResponse(savedUser);
+        return mapToAuthResponse(user);
+    }
+
+    @Transactional
+    @Override
+    public AuthResponse login(LoginRequest loginRequest) {
+        User user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(
+                () -> new EntityNotFoundException("User not found with email: " + loginRequest.getEmail()));
+
+        if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            throw new InvalidPasswordException("Invalid password");
+        }
+
+        return mapToAuthResponse(user);
     }
 
     @Transactional
@@ -78,6 +97,16 @@ public class UserServiceImpl implements UserService {
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
                 .role(UserRole.USER)
+                .build();
+    }
+
+    private AuthResponse mapToAuthResponse(User user) {
+        UserPrincipal userPrincipal = new UserPrincipal(user);
+        String token = jwtService.generateToken(userPrincipal);
+
+        return AuthResponse.builder()
+                .user(mapToUserResponse(user))
+                .token(token)
                 .build();
     }
 }
