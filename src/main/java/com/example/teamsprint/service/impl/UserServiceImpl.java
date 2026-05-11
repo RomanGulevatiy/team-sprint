@@ -100,6 +100,12 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    /**
+     * Helper method to map User entity to AuthResponse DTO
+     *
+     * @param user the User entity to be mapped
+     * @return the corresponding AuthResponse DTO
+     */
     private AuthResponse mapToAuthResponse(User user) {
         UserPrincipal userPrincipal = new UserPrincipal(user);
         String token = jwtService.generateToken(userPrincipal);
