@@ -4,6 +4,7 @@ import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.Project;
+import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.service.ProjectService;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,11 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     @Override
     public void deleteProject(Long projectId) {
+        if(projectRepository.existsById(projectId)) {
+            log.warn("Attempted to delete non-existent project with ID: {}", projectId);
+            throw new EntityNotFoundException("Project with ID: " + projectId + " not found");
+        }
+
         projectRepository.deleteById(projectId);
         log.info("Deleted project with ID: {}", projectId);
     }
