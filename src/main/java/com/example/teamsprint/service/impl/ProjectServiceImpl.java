@@ -52,6 +52,13 @@ public class ProjectServiceImpl implements ProjectService {
         return mapToProjectResponse(savedProject);
     }
 
+    @Transactional
+    @Override
+    public void deleteProject(Long projectId) {
+        projectRepository.deleteById(projectId);
+        log.info("Deleted project with ID: {}", projectId);
+    }
+
     /**
      * Helper method to map ProjectRequest DTO to Project entity
      *
