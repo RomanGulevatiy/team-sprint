@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Project Management", description = "Endpoints for managing projects")
@@ -32,5 +33,13 @@ public class ProjectController {
     @ResponseStatus(HttpStatus.CREATED)
     public ProjectResponse createProject(@Valid @RequestBody ProjectRequest projectRequest) {
         return projectService.createProject(projectRequest);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete a project", description = "Deletes the project with the specified ID")
+    @DeleteMapping("/{projectId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProject(@PathVariable Long projectId) {
+        projectService.deleteProject(projectId);
     }
 }
