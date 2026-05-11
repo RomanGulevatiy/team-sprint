@@ -30,4 +30,15 @@ public class GlobalExceptionHandler {
                 .timestamp(java.time.LocalDateTime.now())
                 .build();
     }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleInvalidPasswordException(InvalidPasswordException exception) {
+        return ErrorResponse.builder()
+                .error("Invalid Password")
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(exception.getMessage())
+                .timestamp(java.time.LocalDateTime.now())
+                .build();
+    }
 }

@@ -1,5 +1,7 @@
 package com.example.teamsprint.controller;
 
+import com.example.teamsprint.dto.AuthResponse;
+import com.example.teamsprint.dto.LoginRequest;
 import com.example.teamsprint.dto.RegisterRequest;
 import com.example.teamsprint.dto.UserResponse;
 import com.example.teamsprint.service.UserService;
@@ -19,10 +21,17 @@ public class UserController {
     private final UserService userService;
 
     @Operation(summary = "Register a new user", description = "Registers a new user with the provided details")
-    @PostMapping("/register")
+    @PostMapping("auth/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
+    public AuthResponse registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         return userService.register(registerRequest);
+    }
+
+    @Operation(summary = "Login a user", description = "Authenticates a user with the provided email and password")
+    @PostMapping("auth/login")
+    @ResponseStatus(HttpStatus.OK)
+    public AuthResponse loginUser(@Valid @RequestBody LoginRequest loginRequest) {
+        return userService.login(loginRequest);
     }
 
     @Operation(summary = "Assign a user to a project", description = "Assigns the specified user to the specified project")
