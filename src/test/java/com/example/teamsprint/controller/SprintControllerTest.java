@@ -4,6 +4,7 @@ import com.example.teamsprint.dto.SprintRequest;
 import com.example.teamsprint.dto.SprintResponse;
 import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.service.SprintService;
+import com.example.teamsprint.security.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,9 @@ class SprintControllerTest {
 
     @MockBean
     private SprintService sprintService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Test
     @DisplayName("createSprint returns 201 with created sprint")

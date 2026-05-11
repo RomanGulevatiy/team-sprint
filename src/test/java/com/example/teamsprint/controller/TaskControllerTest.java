@@ -4,6 +4,7 @@ import com.example.teamsprint.dto.TaskRequest;
 import com.example.teamsprint.dto.TaskResponse;
 import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
+import com.example.teamsprint.security.JwtService;
 import com.example.teamsprint.service.TaskService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +39,9 @@ class TaskControllerTest {
 
     @MockBean
     private TaskService taskService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Test
     @DisplayName("createTask returns 201 with created task")

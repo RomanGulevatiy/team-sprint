@@ -4,6 +4,7 @@ import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.enums.ProjectStatus;
+import com.example.teamsprint.security.JwtService;
 import com.example.teamsprint.service.ProjectService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +39,9 @@ class ProjectControllerTest {
 
     @MockBean
     private ProjectService projectService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Test
     @DisplayName("getAllProjects returns 200 with paginated project response")

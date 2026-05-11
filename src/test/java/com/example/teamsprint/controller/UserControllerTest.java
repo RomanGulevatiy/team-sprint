@@ -1,7 +1,10 @@
 package com.example.teamsprint.controller;
 
+import com.example.teamsprint.dto.AuthResponse;
+import com.example.teamsprint.dto.LoginRequest;
 import com.example.teamsprint.dto.RegisterRequest;
 import com.example.teamsprint.dto.UserResponse;
+import com.example.teamsprint.security.JwtService;
 import com.example.teamsprint.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -30,28 +33,62 @@ class UserControllerTest {
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private JwtService jwtService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @Test
-    @DisplayName("POST /api/register should return 201 Created")
+    @DisplayName("POST /api/auth/register should return 201 Created with token and user")
     void registerUser_returnsCreated() throws Exception {
         RegisterRequest request = new RegisterRequest("john", "john@mail.com", "secret");
-        UserResponse response = UserResponse.builder()
+        UserResponse user = UserResponse.builder()
                 .id(1L)
                 .username("john")
                 .email("john@mail.com")
                 .build();
+        AuthResponse response = AuthResponse.builder()
+                .token("token-123")
+                .user(user)
+                .build();
 
         when(userService.register(any(RegisterRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/register")
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.username").value("john"))
-                .andExpect(jsonPath("$.email").value("john@mail.com"));
+                .andExpect(jsonPath("$.token").value("token-123"))
+                .andExpect(jsonPath("$.user.id").value(1L))
+                .andExpect(jsonPath("$.user.username").value("john"))
+                .andExpect(jsonPath("$.user.email").value("john@mail.com"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/login should return 200 OK with token and user")
+    void loginUser_returnsOk() throws Exception {
+        LoginRequest request = new LoginRequest("john@mail.com", "secret");
+        UserResponse user = UserResponse.builder()
+                .id(1L)
+                .username("john")
+                .email("john@mail.com")
+                .build();
+        AuthResponse response = AuthResponse.builder()
+                .token("token-456")
+                .user(user)
+                .build();
+
+        when(userService.login(any(LoginRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("token-456"))
+                .andExpect(jsonPath("$.user.id").value(1L))
+                .andExpect(jsonPath("$.user.username").value("john"))
+                .andExpect(jsonPath("$.user.email").value("john@mail.com"));
     }
 
     @Test
