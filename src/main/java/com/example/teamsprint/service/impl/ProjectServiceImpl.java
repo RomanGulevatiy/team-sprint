@@ -56,7 +56,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     @Override
     public void deleteProject(Long projectId) {
-        if(projectRepository.existsById(projectId)) {
+        if(!projectRepository.existsById(projectId)) {
             log.warn("Attempted to delete non-existent project with ID: {}", projectId);
             throw new EntityNotFoundException("Project with ID: " + projectId + " not found");
         }
