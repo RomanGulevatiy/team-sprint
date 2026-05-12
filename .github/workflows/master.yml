@@ -6,6 +6,7 @@ on:
       - dev
       - feature/*
       - bugfix/*
+      - hotfix/*
       - refactor/*
 
 jobs:
