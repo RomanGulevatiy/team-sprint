@@ -7,6 +7,7 @@ import com.example.teamsprint.dto.UserResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.UserRole;
+import com.example.teamsprint.exception.EmailAlreadyExistsException;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.exception.InvalidPasswordException;
 import com.example.teamsprint.repository.ProjectRepository;
@@ -34,6 +35,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public AuthResponse register(RegisterRequest registerRequest) {
         User user = mapToUserEntity(registerRequest);
+
+        if(userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+            log.warn("Attempted to register with already used email: {}", registerRequest.getEmail());
+            throw new EmailAlreadyExistsException("Email already in use: " + registerRequest.getEmail());
+        }
 
         User savedUser = userRepository.save(user);
         log.info("Registered new user with ID: {}", savedUser.getId());

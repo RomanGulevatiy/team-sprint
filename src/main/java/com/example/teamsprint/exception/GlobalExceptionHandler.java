@@ -1,10 +1,11 @@
 package com.example.teamsprint.exception;
 
-
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -16,7 +17,7 @@ public class GlobalExceptionHandler {
                 .error("Entity Not Found")
                 .status(HttpStatus.NOT_FOUND.value())
                 .message(exception.getMessage())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
     }
 
@@ -27,7 +28,7 @@ public class GlobalExceptionHandler {
                 .error("User Not In Project")
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message(exception.getMessage())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
                 .build();
     }
 
@@ -38,7 +39,18 @@ public class GlobalExceptionHandler {
                 .error("Invalid Password")
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message(exception.getMessage())
-                .timestamp(java.time.LocalDateTime.now())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleEmailAlreadyExistsException(EmailAlreadyExistsException exception) {
+        return ErrorResponse.builder()
+                .error("Email Already Exists")
+                .status(HttpStatus.CONFLICT.value())
+                .message(exception.getMessage())
+                .timestamp(LocalDateTime.now())
                 .build();
     }
 }
