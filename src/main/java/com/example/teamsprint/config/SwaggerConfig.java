@@ -11,9 +11,9 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI().info(new Info()
-                .title("TeamSprint API")
+                .title("Team Sprint API")
                 .version("1.0")
-                .description("API documentation for TeamSprint application")
+                .description("API documentation for Team Sprint application")
         );
     }
 }
