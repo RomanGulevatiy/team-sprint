@@ -2,8 +2,6 @@ package com.example.teamsprint.dto;
 
 import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -26,10 +24,8 @@ public class TaskRequest {
     private String description;
 
     @NotNull(message = "Priority cannot be null")
-    @Enumerated(EnumType.STRING)
     private TaskPriority priority;
 
     @NotNull(message = "Status cannot be null")
-    @Enumerated(EnumType.STRING)
     private TaskStatus status;
 }
