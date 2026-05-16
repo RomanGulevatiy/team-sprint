@@ -1,8 +1,6 @@
 package com.example.teamsprint.dto;
 
 import com.example.teamsprint.entity.enums.SprintStatus;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,7 +25,6 @@ public class SprintRequest {
     private String description;
 
     @NotNull(message = "Status cannot be null")
-    @Enumerated(EnumType.STRING)
     private SprintStatus status;
 
     private LocalDateTime startDate;

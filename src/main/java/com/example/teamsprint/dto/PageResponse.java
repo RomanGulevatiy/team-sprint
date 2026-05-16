@@ -14,12 +14,8 @@ import java.util.List;
 public class PageResponse<T> {
 
     List<T> content;
-
     int pageNumber;
-
     int pageSize;
-
     long totalElements;
-
     int totalPages;
 }
