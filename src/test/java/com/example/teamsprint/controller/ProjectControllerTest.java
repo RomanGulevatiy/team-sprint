@@ -6,6 +6,7 @@ import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.ProjectStatus;
 import com.example.teamsprint.entity.enums.UserRole;
+import com.example.teamsprint.security.JwtService;
 import com.example.teamsprint.security.UserPrincipal;
 import com.example.teamsprint.service.ProjectService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +47,9 @@ class ProjectControllerTest {
 
     @MockBean
     private ProjectService projectService;
+
+    @MockBean
+    private JwtService jwtService;
 
     @BeforeEach
     void setUpSecurityContext() {
