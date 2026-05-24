@@ -4,8 +4,10 @@ import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.Project;
+import com.example.teamsprint.entity.User;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.repository.ProjectRepository;
+import com.example.teamsprint.repository.UserRepository;
 import com.example.teamsprint.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -22,6 +25,7 @@ import java.util.List;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     @Override
@@ -45,10 +49,19 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Transactional
     @Override
-    public ProjectResponse createProject(ProjectRequest projectRequest) {
-        Project project = mapToProjectEntity(projectRequest);
+    public ProjectResponse createProject(ProjectRequest projectRequest, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("User not found with ID: " + userId));
 
+        Project project = mapToProjectEntity(projectRequest);
         Project savedProject = projectRepository.save(project);
+
+        if (user.getProjects() == null) {
+            user.setProjects(new HashSet<>());
+        }
+        user.getProjects().add(savedProject);
+        userRepository.save(user);
+
         log.info("Created new project with ID: {}", savedProject.getId());
         return mapToProjectResponse(savedProject);
     }
@@ -63,6 +76,27 @@ public class ProjectServiceImpl implements ProjectService {
 
         projectRepository.deleteById(projectId);
         log.info("Deleted project with ID: {}", projectId);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public PageResponse<ProjectResponse> getProjectsForUser(Long userId, int page, int size) {
+        Page<Project> projectPage = projectRepository.findByUsers_Id(
+                userId,
+                PageRequest.of(page, size)
+        );
+
+        List<ProjectResponse> content = projectPage.getContent().stream()
+                .map(this::mapToProjectResponse)
+                .toList();
+
+        return PageResponse.<ProjectResponse>builder()
+                .content(content)
+                .pageNumber(projectPage.getNumber())
+                .pageSize(projectPage.getSize())
+                .totalElements(projectPage.getTotalElements())
+                .totalPages(projectPage.getTotalPages())
+                .build();
     }
 
     /**

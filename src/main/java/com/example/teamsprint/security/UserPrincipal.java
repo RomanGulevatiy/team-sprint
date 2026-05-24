@@ -48,4 +48,8 @@ public class UserPrincipal implements UserDetails {
     public boolean isEnabled() {
         return true; // TODO: Implement user enabling/disabling logic
     }
+
+    public Long getId() {
+        return user.getId();
+    }
 }
