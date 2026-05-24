@@ -4,8 +4,10 @@ import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.Project;
+import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.ProjectStatus;
 import com.example.teamsprint.repository.ProjectRepository;
+import com.example.teamsprint.repository.UserRepository;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -19,10 +21,13 @@ import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,8 +37,18 @@ class ProjectServiceImplTest {
     @Mock
     private ProjectRepository projectRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private ProjectServiceImpl projectService;
+
+    private User buildUser() {
+        return User.builder()
+                .id(1L)
+                .projects(new HashSet<>())
+                .build();
+    }
 
     @Test
     @DisplayName("getAllProjects returns empty PageResponse when no projects exist")
@@ -93,15 +108,19 @@ class ProjectServiceImplTest {
                 .updatedAt(now)
                 .build();
 
+        User user = buildUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
 
-        var result = projectService.createProject(request);
+        var result = projectService.createProject(request, 1L);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getTitle()).isEqualTo("New Project");
         assertThat(result.getDescription()).isEqualTo("New Description");
         assertThat(result.getStatus()).isEqualTo(ProjectStatus.OPEN);
+        assertThat(user.getProjects()).contains(savedProject);
     }
 
     @Test
@@ -120,11 +139,16 @@ class ProjectServiceImplTest {
                 .status(ProjectStatus.OPEN)
                 .build();
 
-        when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        User user = buildUser();
 
-        projectService.createProject(request);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        projectService.createProject(request, 1L);
 
         verify(projectRepository).save(any(Project.class));
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
@@ -143,9 +167,12 @@ class ProjectServiceImplTest {
                 .status(ProjectStatus.CLOSED)
                 .build();
 
+        User user = buildUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
 
-        var result = projectService.createProject(request);
+        var result = projectService.createProject(request, 1L);
 
         assertThat(result.getTitle()).isEqualTo("Mapped Project");
         assertThat(result.getDescription()).isEqualTo("Mapped Description");
@@ -168,9 +195,12 @@ class ProjectServiceImplTest {
                 .status(ProjectStatus.OPEN)
                 .build();
 
+        User user = buildUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
 
-        var result = projectService.createProject(request);
+        var result = projectService.createProject(request, 1L);
 
         assertThat(result.getDescription()).isNull();
     }
@@ -178,6 +208,9 @@ class ProjectServiceImplTest {
     @Test
     @DisplayName("createProject succeeds with all project statuses")
     void createProject_succeeds_withAllProjectStatuses() {
+        User user = buildUser();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
         for (ProjectStatus status : ProjectStatus.values()) {
             ProjectRequest request = ProjectRequest.builder()
                     .title("Project")
@@ -194,7 +227,7 @@ class ProjectServiceImplTest {
 
             when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
 
-            var result = projectService.createProject(request);
+            var result = projectService.createProject(request, 1L);
 
             assertThat(result.getStatus()).isEqualTo(status);
         }
@@ -221,9 +254,12 @@ class ProjectServiceImplTest {
                 .updatedAt(updatedAt)
                 .build();
 
+        User user = buildUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
 
-        var result = projectService.createProject(request);
+        var result = projectService.createProject(request, 1L);
 
         assertThat(result.getCreatedAt()).isEqualTo(createdAt);
         assertThat(result.getUpdatedAt()).isEqualTo(updatedAt);
@@ -250,9 +286,12 @@ class ProjectServiceImplTest {
                 .updatedAt(updatedAt)
                 .build();
 
+        User user = buildUser();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
 
-        var result = projectService.createProject(request);
+        var result = projectService.createProject(request, 1L);
 
         assertThat(result.getId()).isEqualTo(99L);
         assertThat(result.getTitle()).isEqualTo("Complete Project");
@@ -260,5 +299,32 @@ class ProjectServiceImplTest {
         assertThat(result.getStatus()).isEqualTo(ProjectStatus.OPEN);
         assertThat(result.getCreatedAt()).isEqualTo(createdAt);
         assertThat(result.getUpdatedAt()).isEqualTo(updatedAt);
+    }
+
+    @Test
+    @DisplayName("getProjectsForUser returns paginated mapped projects")
+    void getProjectsForUser_returnsPaginatedMappedProjects() {
+        Long userId = 7L;
+        LocalDateTime now = LocalDateTime.now();
+        Project project = Project.builder()
+                .id(2L)
+                .title("Assigned Project")
+                .status(ProjectStatus.OPEN)
+                .createdAt(now)
+                .build();
+
+        PageRequest pageRequest = PageRequest.of(0, 5);
+        Page<Project> projectPage = new PageImpl<>(List.of(project), pageRequest, 1);
+
+        when(projectRepository.findByUsers_Id(eq(userId), any(PageRequest.class))).thenReturn(projectPage);
+
+        var result = projectService.getProjectsForUser(userId, 0, 5);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Assigned Project");
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getPageSize()).isEqualTo(5);
+        assertThat(result.getPageNumber()).isEqualTo(0);
     }
 }

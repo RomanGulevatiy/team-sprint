@@ -8,7 +8,9 @@ public interface ProjectService {
 
     PageResponse<ProjectResponse> getAllProjects(int page, int size);
 
-    ProjectResponse createProject(ProjectRequest projectRequest);
+    PageResponse<ProjectResponse> getProjectsForUser(Long userId, int page, int size);
+
+    ProjectResponse createProject(ProjectRequest projectRequest, Long userId);
 
     void deleteProject(Long projectId);
 }

@@ -3,10 +3,14 @@ package com.example.teamsprint.controller;
 import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
+import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.ProjectStatus;
-import com.example.teamsprint.security.JwtService;
+import com.example.teamsprint.entity.enums.UserRole;
+import com.example.teamsprint.security.UserPrincipal;
 import com.example.teamsprint.service.ProjectService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -21,6 +27,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,8 +47,27 @@ class ProjectControllerTest {
     @MockBean
     private ProjectService projectService;
 
-    @MockBean
-    private JwtService jwtService;
+    @BeforeEach
+    void setUpSecurityContext() {
+        UserPrincipal principal = new UserPrincipal(User.builder()
+                .id(1L)
+                .email("user@example.com")
+                .password("secret")
+                .role(UserRole.USER)
+                .build());
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     @DisplayName("getAllProjects returns 200 with paginated project response")
@@ -62,7 +88,7 @@ class ProjectControllerTest {
                 .totalPages(1)
                 .build();
 
-        when(projectService.getAllProjects(0, 10)).thenReturn(pageResponse);
+        when(projectService.getProjectsForUser(1L, 0, 10)).thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/projects")
                         .param("page", "0")
@@ -95,7 +121,7 @@ class ProjectControllerTest {
                 .updatedAt(now)
                 .build();
 
-        when(projectService.createProject(any(ProjectRequest.class))).thenReturn(response);
+        when(projectService.createProject(any(ProjectRequest.class), eq(1L))).thenReturn(response);
 
         mockMvc.perform(post("/api/projects")
                         .contentType(MediaType.APPLICATION_JSON)
