@@ -9,6 +9,8 @@ public interface UserService {
 
     AuthResponse register(RegisterRequest registerRequest);
 
+    void verify(String token);
+
     AuthResponse login(LoginRequest loginRequest);
 
     UserResponse assignUserToProject(Long userId, Long projectId);

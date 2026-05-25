@@ -2,10 +2,7 @@ package com.example.teamsprint.entity;
 
 import com.example.teamsprint.entity.enums.UserRole;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.*;
@@ -31,6 +28,10 @@ public class User extends BaseEntity {
     @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
     private UserRole role;
+
+    @Column(name = "enabled", nullable = false)
+    @Builder.Default
+    private boolean enabled = false;
 
     @ManyToMany
     @JoinTable(

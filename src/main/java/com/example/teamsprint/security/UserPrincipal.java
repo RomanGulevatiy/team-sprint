@@ -46,7 +46,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true; // TODO: Implement user enabling/disabling logic
+        return user.isEnabled();
     }
 
     public Long getId() {

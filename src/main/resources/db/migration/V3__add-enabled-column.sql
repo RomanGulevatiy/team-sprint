@@ -1,0 +1,5 @@
+ALTER TABLE users
+    ADD enabled BOOLEAN;
+
+ALTER TABLE users
+    ALTER COLUMN enabled SET NOT NULL;
