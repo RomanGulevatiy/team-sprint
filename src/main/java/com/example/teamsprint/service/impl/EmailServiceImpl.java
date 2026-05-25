@@ -13,12 +13,15 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     @Value("${spring.mail.username}")
     private String from;
 
     @Override
     public void sendVerificationEmail(String to, String username, String token) {
-        String link = "http://localhost:8080/api/auth/verify?token=" + token;
+        String link = baseUrl + "/api/auth/verify?token=" + token;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
