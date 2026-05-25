@@ -6,20 +6,24 @@ import com.example.teamsprint.dto.RegisterRequest;
 import com.example.teamsprint.dto.UserResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
+import com.example.teamsprint.entity.VerificationToken;
 import com.example.teamsprint.entity.enums.UserRole;
-import com.example.teamsprint.exception.EmailAlreadyExistsException;
-import com.example.teamsprint.exception.EntityNotFoundException;
-import com.example.teamsprint.exception.InvalidPasswordException;
+import com.example.teamsprint.exception.*;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.UserRepository;
+import com.example.teamsprint.repository.VerificationTokenRepository;
 import com.example.teamsprint.security.JwtService;
 import com.example.teamsprint.security.UserPrincipal;
+import com.example.teamsprint.service.EmailService;
 import com.example.teamsprint.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,22 +32,55 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailService emailService;
 
     @Transactional
     @Override
     public AuthResponse register(RegisterRequest registerRequest) {
-        User user = mapToUserEntity(registerRequest);
-
         if(userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
             log.warn("Attempted to register with already used email: {}", registerRequest.getEmail());
             throw new EmailAlreadyExistsException("Email already in use: " + registerRequest.getEmail());
         }
 
+        User user = mapToUserEntity(registerRequest);
         User savedUser = userRepository.save(user);
-        log.info("Registered new user with ID: {}", savedUser.getId());
-        return mapToAuthResponse(user);
+
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = VerificationToken.builder()
+                .token(token)
+                .user(savedUser)
+                .expiresAt(LocalDateTime.now().plusHours(24))
+                .build();
+        verificationTokenRepository.save(verificationToken);
+
+        emailService.sendVerificationEmail(savedUser.getEmail(), savedUser.getUsername(), token);
+        log.info("Registered new user with ID: {}. Verification email sent.", savedUser.getId());
+
+        return AuthResponse.builder()
+                .user(mapToUserResponse(savedUser))
+                .token(null)
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public void verify(String token) {
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid verification token."));
+
+        if(verificationToken.isExpired()) {
+            throw new InvalidTokenException("Verification token has expired.");
+        }
+
+        User user = verificationToken.getUser();
+        user.setEnabled(true);
+        userRepository.save(user);
+
+        verificationTokenRepository.delete(verificationToken);
+        log.info("Email verified for user ID: {}", user.getId());
     }
 
     @Transactional
@@ -54,6 +91,9 @@ public class UserServiceImpl implements UserService {
 
         if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new InvalidPasswordException("Invalid password");
+        }
+        if(!user.isEnabled()) {
+            throw new AccountNotVerifiedException("Please verify your email before logging in.");
         }
 
         return mapToAuthResponse(user);

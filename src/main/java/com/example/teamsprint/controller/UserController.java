@@ -27,6 +27,13 @@ public class UserController {
         return userService.register(registerRequest);
     }
 
+    @Operation(summary = "Verify email", description = "Activates user account via email verification token")
+    @GetMapping("auth/verify")
+    @ResponseStatus(HttpStatus.OK)
+    public void verifyEmail(@RequestParam String token) {
+        userService.verify(token);
+    }
+
     @Operation(summary = "Login a user", description = "Authenticates a user with the provided email and password")
     @PostMapping("auth/login")
     @ResponseStatus(HttpStatus.OK)
