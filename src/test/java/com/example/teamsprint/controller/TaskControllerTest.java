@@ -3,11 +3,16 @@ package com.example.teamsprint.controller;
 import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.TaskRequest;
 import com.example.teamsprint.dto.TaskResponse;
+import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
+import com.example.teamsprint.entity.enums.UserRole;
+import com.example.teamsprint.security.UserPrincipal;
 import com.example.teamsprint.security.JwtService;
 import com.example.teamsprint.service.TaskService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +21,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,6 +52,28 @@ class TaskControllerTest {
     @MockBean
     private JwtService jwtService;
 
+    @BeforeEach
+    void setUpSecurityContext() {
+        UserPrincipal principal = new UserPrincipal(User.builder()
+                .id(1L)
+                .email("user@example.com")
+                .password("secret")
+                .role(UserRole.USER)
+                .build());
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     @DisplayName("createTask returns 201 with created task")
     void createTask_returnsCreatedTask() throws Exception {
@@ -67,7 +96,7 @@ class TaskControllerTest {
                 .updatedAt(now)
                 .build();
 
-        when(taskService.createTask(eq(4L), any(TaskRequest.class))).thenReturn(response);
+        when(taskService.createTask(eq(4L), any(TaskRequest.class), eq(1L))).thenReturn(response);
 
         mockMvc.perform(post("/api/sprints/4/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -116,7 +145,7 @@ class TaskControllerTest {
                 .totalPages(1)
                 .build();
 
-        when(taskService.getTasksBySprintId(eq(3L), any(), any(), anyInt(), anyInt()))
+        when(taskService.getTasksBySprintId(eq(3L), any(), any(), anyInt(), anyInt(), eq(1L)))
                 .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/sprints/3/tasks"))
@@ -222,7 +251,7 @@ class TaskControllerTest {
                 .title("Updated Task")
                 .build();
 
-        when(taskService.assignTaskToUser(taskId, userId)).thenReturn(response);
+        when(taskService.assignTaskToUser(taskId, userId, 1L)).thenReturn(response);
 
         mockMvc.perform(patch("/api/tasks/" + taskId + "/assign/" + userId))
                 .andExpect(status().isOk())

@@ -52,7 +52,7 @@ class SprintServiceImplTest {
 
         when(projectRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> sprintService.createSprint(99L, request))
+        assertThatThrownBy(() -> sprintService.createSprint(99L, request, 1L))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Project not found with ID: 99");
     }
@@ -91,9 +91,10 @@ class SprintServiceImplTest {
                 .build();
 
         when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        when(projectRepository.existsByIdAndUsers_Id(10L, 1L)).thenReturn(true);
         when(sprintRepository.save(any(Sprint.class))).thenReturn(savedSprint);
 
-        var result = sprintService.createSprint(10L, request);
+        var result = sprintService.createSprint(10L, request, 1L);
 
         assertThat(result.getId()).isEqualTo(5L);
         assertThat(result.getTitle()).isEqualTo("Sprint 1");
@@ -134,9 +135,10 @@ class SprintServiceImplTest {
                 .build();
 
         when(projectRepository.findById(7L)).thenReturn(Optional.of(project));
+        when(projectRepository.existsByIdAndUsers_Id(7L, 1L)).thenReturn(true);
         when(sprintRepository.save(any(Sprint.class))).thenReturn(savedSprint);
 
-        var result = sprintService.createSprint(7L, request);
+        var result = sprintService.createSprint(7L, request, 1L);
 
         assertThat(result.getDescription()).isNull();
         assertThat(result.getStartDate()).isNull();
@@ -149,7 +151,7 @@ class SprintServiceImplTest {
     void getSprintsByProjectId_throwsEntityNotFoundException_whenProjectMissing() {
         when(projectRepository.existsById(31L)).thenReturn(false);
 
-        assertThatThrownBy(() -> sprintService.getSprintsByProjectId(31L, null, 0, 20))
+        assertThatThrownBy(() -> sprintService.getSprintsByProjectId(31L, null, 0, 20, 1L))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Project not found with ID: 31");
     }
@@ -158,10 +160,11 @@ class SprintServiceImplTest {
     @DisplayName("getSprintsByProjectId returns empty list when no sprints exist")
     void getSprintsByProjectId_returnsEmptyList_whenNoSprintsExist() {
         when(projectRepository.existsById(4L)).thenReturn(true);
+        when(projectRepository.existsByIdAndUsers_Id(4L, 1L)).thenReturn(true);
         when(sprintRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
-        PageResponse<?> result = sprintService.getSprintsByProjectId(4L, null, 0, 20);
+        PageResponse<?> result = sprintService.getSprintsByProjectId(4L, null, 0, 20, 1L);
 
         assertThat(result.getContent()).isEmpty();
     }
@@ -196,10 +199,11 @@ class SprintServiceImplTest {
                 .build();
 
         when(projectRepository.existsById(12L)).thenReturn(true);
+        when(projectRepository.existsByIdAndUsers_Id(12L, 1L)).thenReturn(true);
         when(sprintRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(sprint1, sprint2), PageRequest.of(0, 20), 2));
 
-        var result = sprintService.getSprintsByProjectId(12L, null, 0, 20);
+        var result = sprintService.getSprintsByProjectId(12L, null, 0, 20, 1L);
 
         assertThat(result.getContent()).hasSize(2);
         assertThat(result.getContent().getFirst().getId()).isEqualTo(1L);
