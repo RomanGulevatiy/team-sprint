@@ -22,11 +22,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UserNotInProjectException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleUserNotInProjectException(UserNotInProjectException exception) {
         return ErrorResponse.builder()
-                .error("User Not In Project")
-                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Forbidden")
+                .status(HttpStatus.FORBIDDEN.value())
                 .message(exception.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
