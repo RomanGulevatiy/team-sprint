@@ -1,5 +1,6 @@
 package com.example.teamsprint.service.impl;
 
+import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.TaskRequest;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.Sprint;
@@ -19,6 +20,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -145,7 +150,7 @@ class TaskServiceImplTest {
     void getTasksBySprintId_throwsEntityNotFoundException_whenSprintMissing() {
         when(sprintRepository.existsById(22L)).thenReturn(false);
 
-        assertThatThrownBy(() -> taskService.getTasksBySprintId(22L))
+        assertThatThrownBy(() -> taskService.getTasksBySprintId(22L, null, null, 0, 20))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Sprint not found with ID: 22");
     }
@@ -154,11 +159,12 @@ class TaskServiceImplTest {
     @DisplayName("getTasksBySprintId returns empty list when no tasks exist")
     void getTasksBySprintId_returnsEmptyList_whenNoTasksExist() {
         when(sprintRepository.existsById(5L)).thenReturn(true);
-        when(taskRepository.findBySprintId(5L)).thenReturn(List.of());
+        when(taskRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
-        var result = taskService.getTasksBySprintId(5L);
+        PageResponse<?> result = taskService.getTasksBySprintId(5L, null, null, 0, 20);
 
-        assertThat(result).isEmpty();
+        assertThat(result.getContent()).isEmpty();
     }
 
     @Test
@@ -193,21 +199,22 @@ class TaskServiceImplTest {
                 .build();
 
         when(sprintRepository.existsById(11L)).thenReturn(true);
-        when(taskRepository.findBySprintId(11L)).thenReturn(List.of(task1, task2));
+        when(taskRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(task1, task2), PageRequest.of(0, 20), 2));
 
-        var result = taskService.getTasksBySprintId(11L);
+        var result = taskService.getTasksBySprintId(11L, null, null, 0, 20);
 
-        assertThat(result).hasSize(2);
-        assertThat(result.getFirst().getId()).isEqualTo(1L);
-        assertThat(result.getFirst().getTitle()).isEqualTo("Task A");
-        assertThat(result.getFirst().getPriority()).isEqualTo(TaskPriority.LOW);
-        assertThat(result.getFirst().getStatus()).isEqualTo(TaskStatus.TODO);
-        assertThat(result.getFirst().getSprintId()).isEqualTo(11L);
-        assertThat(result.get(1).getId()).isEqualTo(2L);
-        assertThat(result.get(1).getTitle()).isEqualTo("Task B");
-        assertThat(result.get(1).getPriority()).isEqualTo(TaskPriority.HIGH);
-        assertThat(result.get(1).getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
-        assertThat(result.get(1).getSprintId()).isEqualTo(11L);
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().getFirst().getId()).isEqualTo(1L);
+        assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Task A");
+        assertThat(result.getContent().getFirst().getPriority()).isEqualTo(TaskPriority.LOW);
+        assertThat(result.getContent().getFirst().getStatus()).isEqualTo(TaskStatus.TODO);
+        assertThat(result.getContent().getFirst().getSprintId()).isEqualTo(11L);
+        assertThat(result.getContent().get(1).getId()).isEqualTo(2L);
+        assertThat(result.getContent().get(1).getTitle()).isEqualTo("Task B");
+        assertThat(result.getContent().get(1).getPriority()).isEqualTo(TaskPriority.HIGH);
+        assertThat(result.getContent().get(1).getStatus()).isEqualTo(TaskStatus.IN_PROGRESS);
+        assertThat(result.getContent().get(1).getSprintId()).isEqualTo(11L);
     }
 
     @Test

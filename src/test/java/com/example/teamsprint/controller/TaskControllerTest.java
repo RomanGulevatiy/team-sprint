@@ -1,5 +1,6 @@
 package com.example.teamsprint.controller;
 
+import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.TaskRequest;
 import com.example.teamsprint.dto.TaskResponse;
 import com.example.teamsprint.entity.enums.TaskPriority;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -106,19 +108,28 @@ class TaskControllerTest {
                         .build()
         );
 
-        when(taskService.getTasksBySprintId(3L)).thenReturn(responses);
+        PageResponse<TaskResponse> pageResponse = PageResponse.<TaskResponse>builder()
+                .content(responses)
+                .pageNumber(0)
+                .pageSize(20)
+                .totalElements(2)
+                .totalPages(1)
+                .build();
+
+        when(taskService.getTasksBySprintId(eq(3L), any(), any(), anyInt(), anyInt()))
+                .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/sprints/3/tasks"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Task A"))
-                .andExpect(jsonPath("$[0].priority").value("LOW"))
-                .andExpect(jsonPath("$[0].status").value("TODO"))
-                .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].title").value("Task B"))
-                .andExpect(jsonPath("$[1].priority").value("HIGH"))
-                .andExpect(jsonPath("$[1].status").value("IN_PROGRESS"));
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Task A"))
+                .andExpect(jsonPath("$.content[0].priority").value("LOW"))
+                .andExpect(jsonPath("$.content[0].status").value("TODO"))
+                .andExpect(jsonPath("$.content[1].id").value(2))
+                .andExpect(jsonPath("$.content[1].title").value("Task B"))
+                .andExpect(jsonPath("$.content[1].priority").value("HIGH"))
+                .andExpect(jsonPath("$.content[1].status").value("IN_PROGRESS"));
     }
 
     @Test
