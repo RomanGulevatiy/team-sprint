@@ -3,6 +3,7 @@ package com.example.teamsprint.controller;
 import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
+import com.example.teamsprint.entity.enums.ProjectStatus;
 import com.example.teamsprint.security.UserPrincipal;
 import com.example.teamsprint.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,13 +23,15 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
-    @Operation(summary = "Get all projects with pagination", description = "Returns a paginated list of all projects")
+    @Operation(summary = "Get all projects with pagination", description = "Returns a paginated list of projects with optional filters")
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public PageResponse<ProjectResponse> getAllProjects(@AuthenticationPrincipal UserPrincipal principal,
-                                                        @RequestParam(defaultValue = "0") int page,
-                                                        @RequestParam(defaultValue = "10") int size) {
-        return projectService.getProjectsForUser(principal.getId(), page, size);
+    public PageResponse<ProjectResponse> getProjectsForUser(@AuthenticationPrincipal UserPrincipal principal,
+                                                            @RequestParam(required = false) ProjectStatus status,
+                                                            @RequestParam(required = false) String title,
+                                                            @RequestParam(defaultValue = "0") int page,
+                                                            @RequestParam(defaultValue = "10") int size) {
+        return projectService.getProjectsForUser(principal.getId(), status, title, page, size);
     }
 
     @Operation(summary = "Create a new project", description = "Creates a new project with the provided details")
