@@ -63,7 +63,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("register should encode password, save user, create token and send verification email")
     void register_savesUserAndSendsVerificationEmail() {
-        RegisterRequest request = new RegisterRequest("testuser", "test@mail.com", "pass");
+        RegisterRequest request = new RegisterRequest("testuser", "test@mail.com", "pass123");
 
         String encodedPassword = "encoded_password_123";
         when(passwordEncoder.encode(request.getPassword())).thenReturn(encodedPassword);
@@ -83,7 +83,7 @@ class UserServiceImplTest {
         assertThat(result.getUser().getUsername()).isEqualTo("testuser");
         assertThat(result.getUser().getEmail()).isEqualTo("test@mail.com");
         assertThat(result.getToken()).isNull();
-        verify(passwordEncoder).encode("pass");
+        verify(passwordEncoder).encode("pass123");
         verify(userRepository).save(any(User.class));
         verify(verificationTokenRepository).save(any(VerificationToken.class));
         verify(emailService).sendVerificationEmail(eq("test@mail.com"), eq("testuser"), any(String.class));
@@ -92,7 +92,7 @@ class UserServiceImplTest {
     @Test
     @DisplayName("register should throw EmailAlreadyExistsException when email is already used")
     void register_throwsException_whenEmailAlreadyExists() {
-        RegisterRequest request = new RegisterRequest("testuser", "test@mail.com", "pass");
+        RegisterRequest request = new RegisterRequest("testuser", "test@mail.com", "pass123");
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(new User()));
 
         assertThatThrownBy(() -> userService.register(request))

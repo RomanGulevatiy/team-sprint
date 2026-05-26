@@ -3,10 +3,15 @@ package com.example.teamsprint.controller;
 import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.SprintRequest;
 import com.example.teamsprint.dto.SprintResponse;
+import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.SprintStatus;
-import com.example.teamsprint.service.SprintService;
+import com.example.teamsprint.entity.enums.UserRole;
 import com.example.teamsprint.security.JwtService;
+import com.example.teamsprint.security.UserPrincipal;
+import com.example.teamsprint.service.SprintService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +20,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,6 +52,28 @@ class SprintControllerTest {
     @MockBean
     private JwtService jwtService;
 
+    @BeforeEach
+    void setUpSecurityContext() {
+        UserPrincipal principal = new UserPrincipal(User.builder()
+                .id(1L)
+                .email("user@example.com")
+                .password("secret")
+                .role(UserRole.USER)
+                .build());
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     @DisplayName("createSprint returns 201 with created sprint")
     void createSprint_returnsCreatedSprint() throws Exception {
@@ -69,7 +98,7 @@ class SprintControllerTest {
                 .updatedAt(now)
                 .build();
 
-        when(sprintService.createSprint(eq(2L), any(SprintRequest.class))).thenReturn(response);
+        when(sprintService.createSprint(eq(2L), any(SprintRequest.class), eq(1L))).thenReturn(response);
 
         mockMvc.perform(post("/api/projects/2/sprints")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -175,7 +204,7 @@ class SprintControllerTest {
                 .totalPages(1)
                 .build();
 
-        when(sprintService.getSprintsByProjectId(eq(6L), any(), anyInt(), anyInt()))
+        when(sprintService.getSprintsByProjectId(eq(6L), any(), anyInt(), anyInt(), eq(1L)))
                 .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/projects/6/sprints"))

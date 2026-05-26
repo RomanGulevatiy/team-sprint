@@ -14,6 +14,7 @@ import com.example.teamsprint.exception.UserNotInProjectException;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.repository.TaskRepository;
 import com.example.teamsprint.repository.UserRepository;
+import com.example.teamsprint.repository.ProjectRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +48,9 @@ class TaskServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private ProjectRepository projectRepository;
+
     @InjectMocks
     private TaskServiceImpl taskService;
 
@@ -62,7 +66,7 @@ class TaskServiceImplTest {
 
         when(sprintRepository.findById(44L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> taskService.createTask(44L, request))
+        assertThatThrownBy(() -> taskService.createTask(44L, request, 1L))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Sprint not found with ID: 44");
     }
@@ -77,10 +81,12 @@ class TaskServiceImplTest {
                 .status(TaskStatus.IN_PROGRESS)
                 .build();
 
+        Project project = Project.builder().id(30L).build();
         Sprint sprint = Sprint.builder()
                 .id(3L)
                 .title("Sprint")
                 .status(SprintStatus.ACTIVE)
+                .project(project)
                 .build();
 
         LocalDateTime createdAt = LocalDateTime.of(2026, 1, 5, 9, 0, 0);
@@ -97,9 +103,10 @@ class TaskServiceImplTest {
                 .build();
 
         when(sprintRepository.findById(3L)).thenReturn(Optional.of(sprint));
+        when(projectRepository.existsByIdAndUsers_Id(30L, 1L)).thenReturn(true);
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
 
-        var result = taskService.createTask(3L, request);
+        var result = taskService.createTask(3L, request, 1L);
 
         assertThat(result.getId()).isEqualTo(8L);
         assertThat(result.getTitle()).isEqualTo("Task 1");
@@ -121,10 +128,12 @@ class TaskServiceImplTest {
                 .status(TaskStatus.TODO)
                 .build();
 
+        Project project = Project.builder().id(90L).build();
         Sprint sprint = Sprint.builder()
                 .id(9L)
                 .title("Sprint")
                 .status(SprintStatus.PLANNED)
+                .project(project)
                 .build();
 
         Task savedTask = Task.builder()
@@ -137,9 +146,10 @@ class TaskServiceImplTest {
                 .build();
 
         when(sprintRepository.findById(9L)).thenReturn(Optional.of(sprint));
+        when(projectRepository.existsByIdAndUsers_Id(90L, 1L)).thenReturn(true);
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
 
-        var result = taskService.createTask(9L, request);
+        var result = taskService.createTask(9L, request, 1L);
 
         assertThat(result.getDescription()).isNull();
         assertThat(result.getSprintId()).isEqualTo(9L);
@@ -148,9 +158,9 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("getTasksBySprintId throws EntityNotFoundException when sprint does not exist")
     void getTasksBySprintId_throwsEntityNotFoundException_whenSprintMissing() {
-        when(sprintRepository.existsById(22L)).thenReturn(false);
+        when(sprintRepository.findById(22L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> taskService.getTasksBySprintId(22L, null, null, 0, 20))
+        assertThatThrownBy(() -> taskService.getTasksBySprintId(22L, null, null, 0, 20, 1L))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Sprint not found with ID: 22");
     }
@@ -158,11 +168,13 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("getTasksBySprintId returns empty list when no tasks exist")
     void getTasksBySprintId_returnsEmptyList_whenNoTasksExist() {
-        when(sprintRepository.existsById(5L)).thenReturn(true);
+        Sprint sprint = Sprint.builder().id(5L).project(Project.builder().id(50L).build()).build();
+        when(sprintRepository.findById(5L)).thenReturn(Optional.of(sprint));
+        when(projectRepository.existsByIdAndUsers_Id(50L, 1L)).thenReturn(true);
         when(taskRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
-        PageResponse<?> result = taskService.getTasksBySprintId(5L, null, null, 0, 20);
+        PageResponse<?> result = taskService.getTasksBySprintId(5L, null, null, 0, 20, 1L);
 
         assertThat(result.getContent()).isEmpty();
     }
@@ -170,10 +182,12 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("getTasksBySprintId maps task entities to responses")
     void getTasksBySprintId_mapsTaskEntitiesToResponses() {
+        Project project = Project.builder().id(110L).build();
         Sprint sprint = Sprint.builder()
                 .id(11L)
                 .title("Sprint")
                 .status(SprintStatus.ACTIVE)
+                .project(project)
                 .build();
 
         LocalDateTime now = LocalDateTime.of(2026, 1, 7, 10, 0, 0);
@@ -198,11 +212,12 @@ class TaskServiceImplTest {
                 .updatedAt(now)
                 .build();
 
-        when(sprintRepository.existsById(11L)).thenReturn(true);
+        when(sprintRepository.findById(11L)).thenReturn(Optional.of(sprint));
+        when(projectRepository.existsByIdAndUsers_Id(110L, 1L)).thenReturn(true);
         when(taskRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(task1, task2), PageRequest.of(0, 20), 2));
 
-        var result = taskService.getTasksBySprintId(11L, null, null, 0, 20);
+        var result = taskService.getTasksBySprintId(11L, null, null, 0, 20, 1L);
 
         assertThat(result.getContent()).hasSize(2);
         assertThat(result.getContent().getFirst().getId()).isEqualTo(1L);
@@ -234,10 +249,11 @@ class TaskServiceImplTest {
                 .build();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        when(projectRepository.existsByIdAndUsers_Id(projectId, 1L)).thenReturn(true);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        taskService.assignTaskToUser(taskId, userId);
+        taskService.assignTaskToUser(taskId, userId, 1L);
 
         assertThat(task.getAssignee()).isEqualTo(user);
         verify(taskRepository).save(task);
@@ -255,9 +271,10 @@ class TaskServiceImplTest {
         User user = User.builder().id(10L).projects(new java.util.HashSet<>(List.of(projectB))).build();
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(projectRepository.existsByIdAndUsers_Id(1L, 1L)).thenReturn(true);
         when(userRepository.findById(10L)).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> taskService.assignTaskToUser(1L, 10L))
+        assertThatThrownBy(() -> taskService.assignTaskToUser(1L, 10L, 1L))
                 .isInstanceOf(UserNotInProjectException.class)
                 .hasMessageContaining("is not part of the project associated with this task");
     }
@@ -267,7 +284,7 @@ class TaskServiceImplTest {
     void assignTaskToUser_throwsException_whenTaskNotFound() {
         when(taskRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> taskService.assignTaskToUser(1L, 10L))
+        assertThatThrownBy(() -> taskService.assignTaskToUser(1L, 10L, 1L))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 }
