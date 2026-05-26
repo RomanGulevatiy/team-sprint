@@ -28,5 +28,6 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Password cannot be null")
+    @Size(min = 6, max = 64, message = "Password must be {min}-{max} characters long")
     private String password;
 }
