@@ -1,7 +1,9 @@
 package com.example.teamsprint.controller;
 
+import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.SprintRequest;
 import com.example.teamsprint.dto.SprintResponse;
+import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.service.SprintService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,8 +11,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Sprint Management", description = "Endpoints for managing sprints within projects")
 @RestController
@@ -28,10 +28,16 @@ public class SprintController {
         return sprintService.createSprint(projectId, sprintRequest);
     }
 
-    @Operation(summary = "Get all sprints for a project", description = "Returns a list of all sprints associated with the specified project")
+    @Operation(summary = "Get all sprints for a project", description = "Returns a paginated list of sprints with optional filters")
     @GetMapping("projects/{projectId}/sprints")
     @ResponseStatus(HttpStatus.OK)
-    public List<SprintResponse> getSprintsByProjectId(@PathVariable Long projectId) {
-        return sprintService.getSprintsByProjectId(projectId);
+    public PageResponse<SprintResponse> getSprintsByProjectId(@PathVariable Long projectId,
+                                                              @RequestParam(required = false) SprintStatus status,
+                                                              @RequestParam(defaultValue = "0") int page,
+                                                              @RequestParam(defaultValue = "10") int size) {
+        return sprintService.getSprintsByProjectId(projectId,
+                status,
+                page,
+                size);
     }
 }
