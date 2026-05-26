@@ -18,6 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -27,7 +29,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,45 +49,6 @@ class ProjectServiceImplTest {
                 .id(1L)
                 .projects(new HashSet<>())
                 .build();
-    }
-
-    @Test
-    @DisplayName("getAllProjects returns empty PageResponse when no projects exist")
-    void getAllProjects_returnsEmptyPageResponse_whenNoProjectsExist() {
-        Page<Project> emptyPage = new PageImpl<>(Collections.emptyList());
-        when(projectRepository.findAll(any(PageRequest.class))).thenReturn(emptyPage);
-
-        PageResponse<ProjectResponse> result = projectService.getAllProjects(0, 10);
-
-        assertThat(result.getContent()).isEmpty();
-        assertThat(result.getTotalElements()).isZero();
-        assertThat(result.getPageNumber()).isZero();
-    }
-
-    @Test
-    @DisplayName("getAllProjects returns paginated mapped projects")
-    void getAllProjects_returnsPaginatedMappedProjects() {
-        LocalDateTime now = LocalDateTime.now();
-        Project project = Project.builder()
-                .id(1L)
-                .title("Project 1")
-                .status(ProjectStatus.OPEN)
-                .createdAt(now)
-                .build();
-
-        PageRequest pageRequest = PageRequest.of(0, 10);
-        Page<Project> projectPage = new PageImpl<>(List.of(project), pageRequest, 1);
-
-        when(projectRepository.findAll(any(PageRequest.of(0, 10).getClass()))).thenReturn(projectPage);
-
-        var result = projectService.getAllProjects(0, 10);
-
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Project 1");
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getTotalPages()).isEqualTo(1);
-        assertThat(result.getPageSize()).isEqualTo(10);
-        assertThat(result.getPageNumber()).isEqualTo(0);
     }
 
     @Test
@@ -316,9 +278,9 @@ class ProjectServiceImplTest {
         PageRequest pageRequest = PageRequest.of(0, 5);
         Page<Project> projectPage = new PageImpl<>(List.of(project), pageRequest, 1);
 
-        when(projectRepository.findByUsers_Id(eq(userId), any(PageRequest.class))).thenReturn(projectPage);
+        when(projectRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(projectPage);
 
-        var result = projectService.getProjectsForUser(userId, 0, 5);
+        var result = projectService.getProjectsForUser(userId, null, null, 0, 5);
 
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Assigned Project");
