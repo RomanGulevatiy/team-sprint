@@ -7,6 +7,7 @@ import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
+import com.example.teamsprint.exception.UserNotInProjectException;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.service.SprintService;
@@ -32,10 +33,14 @@ public class SprintServiceImpl implements SprintService {
 
     @Transactional
     @Override
-    public SprintResponse createSprint(Long projectId, SprintRequest sprintRequest) {
+    public SprintResponse createSprint(Long projectId, SprintRequest sprintRequest, Long userId) {
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException("Project not found with ID: " + projectId));
+
+        if(!projectRepository.existsByIdAndUsers_Id(projectId, userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId + " is not part of project ID: " + projectId);
+        }
 
         Sprint sprint = mapToSprintEntity(sprintRequest);
         sprint.setProject(project);
@@ -50,9 +55,13 @@ public class SprintServiceImpl implements SprintService {
     public PageResponse<SprintResponse> getSprintsByProjectId(Long projectId,
                                                               SprintStatus status,
                                                               int page,
-                                                              int size) {
+                                                              int size,
+                                                              Long userId) {
         if(!projectRepository.existsById(projectId)) {
             throw new EntityNotFoundException("Project not found with ID: " + projectId);
+        }
+        if(!projectRepository.existsByIdAndUsers_Id(projectId, userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId + " is not part of project ID: " + projectId);
         }
 
         Specification<Sprint> spec = (root, query, cb) -> {

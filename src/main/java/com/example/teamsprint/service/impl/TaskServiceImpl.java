@@ -10,6 +10,7 @@ import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.exception.UserNotInProjectException;
+import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.repository.TaskRepository;
 import com.example.teamsprint.repository.UserRepository;
@@ -34,14 +35,19 @@ public class TaskServiceImpl implements TaskService {
     private final SprintRepository sprintRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final ProjectRepository projectRepository;
 
     @Transactional
     @Override
-    public TaskResponse createTask(Long sprintId, TaskRequest taskRequest) {
+    public TaskResponse createTask(Long sprintId, TaskRequest taskRequest, Long userId) {
 
         Sprint sprint = sprintRepository.findById(sprintId)
                 .orElseThrow(() -> new EntityNotFoundException("Sprint not found with ID: " + sprintId));
 
+        Long projectId = sprint.getProject().getId();
+        if(!projectRepository.existsByIdAndUsers_Id(projectId, userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId + " is not part of project ID: " + projectId);
+        }
         Task task = mapToTaskEntity(taskRequest);
         task.setSprint(sprint);
 
@@ -56,9 +62,14 @@ public class TaskServiceImpl implements TaskService {
                                                          TaskStatus status,
                                                          TaskPriority priority,
                                                          int page,
-                                                         int size) {
-        if(!sprintRepository.existsById(sprintId)) {
-            throw new EntityNotFoundException("Sprint not found with ID: " + sprintId);
+                                                         int size,
+                                                         Long userId) {
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new EntityNotFoundException("Sprint not found with ID: " + sprintId));
+
+        Long projectId = sprint.getProject().getId();
+        if(!projectRepository.existsByIdAndUsers_Id(projectId, userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId + " is not part of project ID: " + projectId);
         }
 
         Specification<Task> spec = (root, query, cb) -> {
@@ -92,15 +103,20 @@ public class TaskServiceImpl implements TaskService {
 
     @Transactional
     @Override
-    public TaskResponse assignTaskToUser(Long taskId, Long userId) {
+    public TaskResponse assignTaskToUser(Long taskId, Long userId, Long requesterId) {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
 
+        Long projectId = task.getSprint().getProject().getId();
+        if(!projectRepository.existsByIdAndUsers_Id(projectId, requesterId)) {
+            throw new UserNotInProjectException("User with ID: " + requesterId + " is not part of project ID: " + projectId);
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
 
-        if (!user.getProjects().contains(task.getSprint().getProject())) {
+        if(!user.getProjects().contains(task.getSprint().getProject())) {
             throw new UserNotInProjectException("User with ID: " + userId + " is not part of the project associated with this task.");
         }
 
