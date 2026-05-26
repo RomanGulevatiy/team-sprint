@@ -5,6 +5,7 @@ import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
+import com.example.teamsprint.entity.enums.ProjectStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.UserRepository;
@@ -13,9 +14,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -27,25 +32,6 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
 
-    @Transactional(readOnly = true)
-    @Override
-    public PageResponse<ProjectResponse> getAllProjects(int page, int size) {
-        Page<Project> projectPage = projectRepository.findAll(
-                PageRequest.of(page, size)
-        );
-
-        List<ProjectResponse> content = projectPage.getContent().stream()
-                .map(this::mapToProjectResponse)
-                .toList();
-
-        return PageResponse.<ProjectResponse>builder()
-                .content(content)
-                .pageNumber(projectPage.getNumber())
-                .pageSize(projectPage.getSize())
-                .totalElements(projectPage.getTotalElements())
-                .totalPages(projectPage.getTotalPages())
-                .build();
-    }
 
     @Transactional
     @Override
@@ -80,11 +66,13 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Transactional(readOnly = true)
     @Override
-    public PageResponse<ProjectResponse> getProjectsForUser(Long userId, int page, int size) {
-        Page<Project> projectPage = projectRepository.findByUsers_Id(
-                userId,
-                PageRequest.of(page, size)
-        );
+    public PageResponse<ProjectResponse> getProjectsForUser(Long userId,
+                                                            ProjectStatus status,
+                                                            String title,
+                                                            int page,
+                                                            int size) {
+        Specification<Project> spec = buildProjectSpecification(userId, status, title);
+        Page<Project> projectPage = projectRepository.findAll(spec, PageRequest.of(page, size));
 
         List<ProjectResponse> content = projectPage.getContent().stream()
                 .map(this::mapToProjectResponse)
@@ -128,5 +116,29 @@ public class ProjectServiceImpl implements ProjectService {
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
                 .build();
+    }
+
+    private Specification<Project> buildProjectSpecification(Long userId, ProjectStatus status, String title) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if(userId != null) {
+                Join<Project, User> users = root.join("users");
+                predicates.add(cb.equal(users.get("id"), userId));
+
+                if(query != null) {
+                    query.distinct(true);
+                }
+            }
+
+            if(status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if(title != null && !title.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("title")), "%" + title.trim().toLowerCase() + "%"));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }
