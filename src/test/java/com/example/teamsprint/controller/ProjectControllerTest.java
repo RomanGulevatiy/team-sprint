@@ -74,8 +74,8 @@ class ProjectControllerTest {
     }
 
     @Test
-    @DisplayName("getAllProjects returns 200 with paginated project response")
-    void getAllProjects_returnsOkWithPaginatedResponse() throws Exception {
+    @DisplayName("getProjectsForUser returns 200 with paginated project response")
+    void getProjectsForUser_returnsOkWithPaginatedResponse() throws Exception {
         List<ProjectResponse> content = List.of(
                 ProjectResponse.builder()
                         .id(1L)
@@ -92,7 +92,8 @@ class ProjectControllerTest {
                 .totalPages(1)
                 .build();
 
-        when(projectService.getProjectsForUser(1L, 0, 10)).thenReturn(pageResponse);
+        when(projectService.getProjectsForUser(eq(1L), any(), any(), eq(0), eq(10)))
+                .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/projects")
                         .param("page", "0")
