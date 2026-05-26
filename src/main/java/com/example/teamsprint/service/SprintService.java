@@ -7,10 +7,11 @@ import com.example.teamsprint.entity.enums.SprintStatus;
 
 public interface SprintService {
 
-    SprintResponse createSprint(Long projectId, SprintRequest sprintRequest);
+    SprintResponse createSprint(Long projectId, SprintRequest sprintRequest, Long userId);
 
     PageResponse<SprintResponse> getSprintsByProjectId(Long projectId,
-                                                       SprintStatus status,
-                                                       int page,
-                                                       int size);
+                                                      SprintStatus status,
+                                                      int page,
+                                                      int size,
+                                                      Long userId);
 }
