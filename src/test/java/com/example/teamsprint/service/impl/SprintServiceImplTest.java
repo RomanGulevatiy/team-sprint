@@ -1,5 +1,6 @@
 package com.example.teamsprint.service.impl;
 
+import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.SprintRequest;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.Sprint;
@@ -14,6 +15,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -144,7 +149,7 @@ class SprintServiceImplTest {
     void getSprintsByProjectId_throwsEntityNotFoundException_whenProjectMissing() {
         when(projectRepository.existsById(31L)).thenReturn(false);
 
-        assertThatThrownBy(() -> sprintService.getSprintsByProjectId(31L))
+        assertThatThrownBy(() -> sprintService.getSprintsByProjectId(31L, null, 0, 20))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Project not found with ID: 31");
     }
@@ -153,11 +158,12 @@ class SprintServiceImplTest {
     @DisplayName("getSprintsByProjectId returns empty list when no sprints exist")
     void getSprintsByProjectId_returnsEmptyList_whenNoSprintsExist() {
         when(projectRepository.existsById(4L)).thenReturn(true);
-        when(sprintRepository.findByProjectId(4L)).thenReturn(List.of());
+        when(sprintRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
 
-        var result = sprintService.getSprintsByProjectId(4L);
+        PageResponse<?> result = sprintService.getSprintsByProjectId(4L, null, 0, 20);
 
-        assertThat(result).isEmpty();
+        assertThat(result.getContent()).isEmpty();
     }
 
     @Test
@@ -190,18 +196,19 @@ class SprintServiceImplTest {
                 .build();
 
         when(projectRepository.existsById(12L)).thenReturn(true);
-        when(sprintRepository.findByProjectId(12L)).thenReturn(List.of(sprint1, sprint2));
+        when(sprintRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sprint1, sprint2), PageRequest.of(0, 20), 2));
 
-        var result = sprintService.getSprintsByProjectId(12L);
+        var result = sprintService.getSprintsByProjectId(12L, null, 0, 20);
 
-        assertThat(result).hasSize(2);
-        assertThat(result.getFirst().getId()).isEqualTo(1L);
-        assertThat(result.getFirst().getTitle()).isEqualTo("Sprint A");
-        assertThat(result.getFirst().getStatus()).isEqualTo(SprintStatus.ACTIVE);
-        assertThat(result.getFirst().getProjectId()).isEqualTo(12L);
-        assertThat(result.get(1).getId()).isEqualTo(2L);
-        assertThat(result.get(1).getTitle()).isEqualTo("Sprint B");
-        assertThat(result.get(1).getStatus()).isEqualTo(SprintStatus.PLANNED);
-        assertThat(result.get(1).getProjectId()).isEqualTo(12L);
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().getFirst().getId()).isEqualTo(1L);
+        assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Sprint A");
+        assertThat(result.getContent().getFirst().getStatus()).isEqualTo(SprintStatus.ACTIVE);
+        assertThat(result.getContent().getFirst().getProjectId()).isEqualTo(12L);
+        assertThat(result.getContent().get(1).getId()).isEqualTo(2L);
+        assertThat(result.getContent().get(1).getTitle()).isEqualTo("Sprint B");
+        assertThat(result.getContent().get(1).getStatus()).isEqualTo(SprintStatus.PLANNED);
+        assertThat(result.getContent().get(1).getProjectId()).isEqualTo(12L);
     }
 }
