@@ -21,6 +21,7 @@ public class TaskResponse {
     private TaskPriority priority;
     private TaskStatus status;
     private Long sprintId;
+    private Long assigneeId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -155,6 +155,7 @@ public class TaskServiceImpl implements TaskService {
                 .priority(task.getPriority())
                 .status(task.getStatus())
                 .sprintId(task.getSprint().getId())
+                .assigneeId(task.getAssignee() != null ? task.getAssignee().getId() : null)
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();
