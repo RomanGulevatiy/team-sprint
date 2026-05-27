@@ -108,6 +108,10 @@ public class UserServiceImpl implements UserService {
         Project project = projectRepository.findById(projectId).orElseThrow(
                 () -> new EntityNotFoundException("Project not found with ID: " + projectId));
 
+        if(user.getProjects().contains(project)) {
+            throw new UserAlreadyInProjectException("User ID: " + userId + " is already assigned to project ID " + projectId);
+        }
+
         user.getProjects().add(project);
         User updatedUser = userRepository.save(user);
         log.info("Assigned user ID: {} to project ID: {}", userId, projectId);
