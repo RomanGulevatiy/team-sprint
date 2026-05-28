@@ -1,7 +1,7 @@
 package com.example.teamsprint.mapper;
 
-import com.example.teamsprint.dto.TaskRequest;
-import com.example.teamsprint.dto.TaskResponse;
+import com.example.teamsprint.dto.request.TaskRequest;
+import com.example.teamsprint.dto.response.TaskResponse;
 import com.example.teamsprint.entity.Task;
 import org.springframework.stereotype.Component;
 

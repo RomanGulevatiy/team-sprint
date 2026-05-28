@@ -1,7 +1,7 @@
 package com.example.teamsprint.mapper;
 
-import com.example.teamsprint.dto.RegisterRequest;
-import com.example.teamsprint.dto.UserResponse;
+import com.example.teamsprint.dto.request.RegisterRequest;
+import com.example.teamsprint.dto.response.UserResponse;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.UserRole;
 import org.springframework.stereotype.Component;

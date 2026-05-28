@@ -1,8 +1,8 @@
 package com.example.teamsprint.controller;
 
-import com.example.teamsprint.dto.PageResponse;
-import com.example.teamsprint.dto.TaskRequest;
-import com.example.teamsprint.dto.TaskResponse;
+import com.example.teamsprint.dto.response.PageResponse;
+import com.example.teamsprint.dto.request.TaskRequest;
+import com.example.teamsprint.dto.response.TaskResponse;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;

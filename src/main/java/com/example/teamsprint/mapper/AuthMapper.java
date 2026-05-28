@@ -1,6 +1,6 @@
 package com.example.teamsprint.mapper;
 
-import com.example.teamsprint.dto.AuthResponse;
+import com.example.teamsprint.dto.response.AuthResponse;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.security.JwtService;
 import com.example.teamsprint.security.UserPrincipal;

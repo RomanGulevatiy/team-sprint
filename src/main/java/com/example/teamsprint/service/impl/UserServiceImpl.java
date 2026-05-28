@@ -1,6 +1,6 @@
 package com.example.teamsprint.service.impl;
 
-import com.example.teamsprint.dto.UserResponse;
+import com.example.teamsprint.dto.response.UserResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.exception.EntityNotFoundException;

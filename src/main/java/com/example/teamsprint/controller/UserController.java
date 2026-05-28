@@ -1,6 +1,6 @@
 package com.example.teamsprint.controller;
 
-import com.example.teamsprint.dto.UserResponse;
+import com.example.teamsprint.dto.response.UserResponse;
 import com.example.teamsprint.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

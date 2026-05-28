@@ -1,6 +1,6 @@
 package com.example.teamsprint.controller;
 
-import com.example.teamsprint.dto.UserResponse;
+import com.example.teamsprint.dto.response.UserResponse;
 import com.example.teamsprint.service.UserService;
 import com.example.teamsprint.security.JwtService;
 import org.junit.jupiter.api.DisplayName;

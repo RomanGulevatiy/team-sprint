@@ -1,10 +1,10 @@
 package com.example.teamsprint.service.impl;
 
-import com.example.teamsprint.dto.AuthResponse;
-import com.example.teamsprint.dto.LoginRequest;
-import com.example.teamsprint.dto.RefreshTokenRequest;
-import com.example.teamsprint.dto.RegisterRequest;
-import com.example.teamsprint.dto.UserResponse;
+import com.example.teamsprint.dto.response.AuthResponse;
+import com.example.teamsprint.dto.request.LoginRequest;
+import com.example.teamsprint.dto.request.RefreshTokenRequest;
+import com.example.teamsprint.dto.request.RegisterRequest;
+import com.example.teamsprint.dto.response.UserResponse;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.VerificationToken;
 import com.example.teamsprint.exception.AccountNotVerifiedException;

@@ -1,8 +1,8 @@
 package com.example.teamsprint.controller;
 
-import com.example.teamsprint.dto.PageResponse;
-import com.example.teamsprint.dto.SprintRequest;
-import com.example.teamsprint.dto.SprintResponse;
+import com.example.teamsprint.dto.response.PageResponse;
+import com.example.teamsprint.dto.request.SprintRequest;
+import com.example.teamsprint.dto.response.SprintResponse;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.entity.enums.UserRole;
