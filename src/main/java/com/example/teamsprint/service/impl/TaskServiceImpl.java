@@ -1,8 +1,9 @@
 package com.example.teamsprint.service.impl;
 
-import com.example.teamsprint.dto.PageResponse;
-import com.example.teamsprint.dto.TaskRequest;
-import com.example.teamsprint.dto.TaskResponse;
+import com.example.teamsprint.dto.request.UpdateTaskRequest;
+import com.example.teamsprint.dto.response.PageResponse;
+import com.example.teamsprint.dto.request.TaskRequest;
+import com.example.teamsprint.dto.response.TaskResponse;
 import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.Task;
 import com.example.teamsprint.entity.User;
@@ -114,19 +115,57 @@ public class TaskServiceImpl implements TaskService {
 
         Long projectId = task.getSprint().getProject().getId();
         if(!projectRepository.existsByIdAndUsers_Id(projectId, requesterId)) {
-            throw new UserNotInProjectException("User with ID: " + requesterId + " is not part of project ID: " + projectId);
+            throw new UserNotInProjectException("User with ID: " + requesterId
+                    + " is not part of project ID: " + projectId);
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
 
-        if(!user.getProjects().contains(task.getSprint().getProject())) {
-            throw new UserNotInProjectException("User with ID: " + userId + " is not part of the project associated with this task.");
+        if(!projectRepository.existsByIdAndUsers_Id(projectId, userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId
+                    + " is not part of the project associated with this task.");
         }
 
         task.setAssignee(user);
         Task updatedTask = taskRepository.save(task);
         log.info("Assigned task ID: {} to user ID: {}", taskId, userId);
         return taskMapper.toResponse(updatedTask);
+    }
+
+    @Transactional
+    @Override
+    public TaskResponse updateTask(Long taskId, UpdateTaskRequest request, Long userId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
+
+        if(!projectRepository.existsByIdAndUsers_Id(task.getSprint().getProject().getId(), userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId
+                    + " is not part of project ID: " + task.getSprint().getProject().getId());
+        }
+
+        if(request.getTitle() != null) task.setTitle(request.getTitle());
+        if(request.getDescription() != null) task.setDescription(request.getDescription());
+        if(request.getStatus() != null) task.setStatus(request.getStatus());
+        if(request.getPriority() != null) task.setPriority(request.getPriority());
+
+        Task updated = taskRepository.save(task);
+        log.info("Updated task with ID: {}", taskId);
+        return taskMapper.toResponse(updated);
+    }
+
+    @Transactional
+    @Override
+    public void deleteTask(Long taskId, Long userId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
+
+        if(!projectRepository.existsByIdAndUsers_Id(task.getSprint().getProject().getId(), userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId
+                    + " is not part of project ID: " + task.getSprint().getProject().getId());
+        }
+
+        taskRepository.delete(task);
+        log.info("Deleted task with ID: {}", taskId);
     }
 }

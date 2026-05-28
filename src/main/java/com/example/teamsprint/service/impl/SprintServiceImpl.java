@@ -1,8 +1,9 @@
 package com.example.teamsprint.service.impl;
 
-import com.example.teamsprint.dto.PageResponse;
-import com.example.teamsprint.dto.SprintRequest;
-import com.example.teamsprint.dto.SprintResponse;
+import com.example.teamsprint.dto.request.UpdateSprintRequest;
+import com.example.teamsprint.dto.response.PageResponse;
+import com.example.teamsprint.dto.request.SprintRequest;
+import com.example.teamsprint.dto.response.SprintResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.enums.SprintStatus;
@@ -94,4 +95,40 @@ public class SprintServiceImpl implements SprintService {
                 .build();
     }
 
+    @Transactional
+    @Override
+    public SprintResponse updateSprint(Long sprintId, UpdateSprintRequest request, Long userId) {
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new EntityNotFoundException("Sprint not found with ID: " + sprintId));
+
+        if(!projectRepository.existsByIdAndUsers_Id(sprint.getProject().getId(), userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId
+                    + " is not part of project ID: " + sprint.getProject().getId());
+        }
+
+        if(request.getTitle() != null) sprint.setTitle(request.getTitle());
+        if(request.getDescription() != null) sprint.setDescription(request.getDescription());
+        if(request.getStatus() != null) sprint.setStatus(request.getStatus());
+        if(request.getStartDate() != null) sprint.setStartDate(request.getStartDate());
+        if(request.getDueDate() != null) sprint.setDueDate(request.getDueDate());
+
+        Sprint updated = sprintRepository.save(sprint);
+        log.info("Updated sprint with ID: {}", sprintId);
+        return sprintMapper.toResponse(updated);
+    }
+
+    @Transactional
+    @Override
+    public void deleteSprint(Long sprintId, Long userId) {
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new EntityNotFoundException("Sprint not found with ID: " + sprintId));
+
+        if(!projectRepository.existsByIdAndUsers_Id(sprint.getProject().getId(), userId)) {
+            throw new UserNotInProjectException("User with ID: " + userId
+                    + " is not part of project ID: " + sprint.getProject().getId());
+        }
+
+        sprintRepository.delete(sprint);
+        log.info("Deleted sprint with ID: {}", sprintId);
+    }
 }

@@ -1,8 +1,9 @@
 package com.example.teamsprint.controller;
 
-import com.example.teamsprint.dto.PageResponse;
-import com.example.teamsprint.dto.SprintRequest;
-import com.example.teamsprint.dto.SprintResponse;
+import com.example.teamsprint.dto.request.UpdateSprintRequest;
+import com.example.teamsprint.dto.response.PageResponse;
+import com.example.teamsprint.dto.request.SprintRequest;
+import com.example.teamsprint.dto.response.SprintResponse;
 import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.security.UserPrincipal;
 import com.example.teamsprint.service.SprintService;
@@ -44,5 +45,22 @@ public class SprintController {
                 page,
                 size,
                 principal.getId());
+    }
+
+    @Operation(summary = "Update a sprint", description = "Updates the details of an existing sprint")
+    @PatchMapping("sprints/{sprintId}")
+    @ResponseStatus(HttpStatus.OK)
+    public SprintResponse updateSprint(@PathVariable Long sprintId,
+                                       @AuthenticationPrincipal UserPrincipal principal,
+                                       @Valid @RequestBody UpdateSprintRequest request) {
+        return sprintService.updateSprint(sprintId, request, principal.getId());
+    }
+
+    @Operation(summary = "Delete a sprint", description = "Deletes an existing sprint by its ID")
+    @DeleteMapping("sprints/{sprintId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteSprint(@PathVariable Long sprintId,
+                             @AuthenticationPrincipal UserPrincipal principal) {
+        sprintService.deleteSprint(sprintId, principal.getId());
     }
 }
