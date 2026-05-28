@@ -1,4 +1,4 @@
-package com.example.teamsprint.dto;
+package com.example.teamsprint.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

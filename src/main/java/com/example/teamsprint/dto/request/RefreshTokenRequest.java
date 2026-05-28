@@ -1,5 +1,6 @@
-package com.example.teamsprint.dto;
+package com.example.teamsprint.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,9 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AuthResponse {
+public class RefreshTokenRequest {
 
-    private String accessToken;
+    @NotBlank(message = "Refresh token is required")
     private String refreshToken;
-    private UserResponse user;
 }
+
