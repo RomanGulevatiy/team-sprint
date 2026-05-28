@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +75,8 @@ public class ProjectServiceImpl implements ProjectService {
                                                             int page,
                                                             int size) {
         Specification<Project> spec = buildProjectSpecification(userId, status, title);
-        Page<Project> projectPage = projectRepository.findAll(spec, PageRequest.of(page, size));
+        Page<Project> projectPage = projectRepository.findAll(spec,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
 
         List<ProjectResponse> content = projectPage.getContent().stream()
                 .map(projectMapper::toResponse)
