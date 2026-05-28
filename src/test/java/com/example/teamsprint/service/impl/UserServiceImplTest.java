@@ -4,6 +4,7 @@ import com.example.teamsprint.dto.response.UserResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.exception.EntityNotFoundException;
+import com.example.teamsprint.exception.UserNotInProjectException;
 import com.example.teamsprint.mapper.UserMapper;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.UserRepository;
@@ -42,16 +43,18 @@ class UserServiceImplTest {
     void assignUserToProject_success() {
         Long userId = 1L;
         Long projectId = 10L;
+        Long requesterId = 99L;
 
         User user = User.builder().id(userId).projects(new HashSet<>()).build();
         Project project = Project.builder().id(projectId).title("Project X").build();
 
+        when(projectRepository.existsByIdAndUsers_Id(projectId, requesterId)).thenReturn(true);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(userMapper.toResponse(user)).thenReturn(UserResponse.builder().id(userId).build());
 
-        UserResponse result = userService.assignUserToProject(userId, projectId);
+        UserResponse result = userService.assignUserToProject(userId, projectId, requesterId);
 
         assertThat(user.getProjects()).contains(project);
         assertThat(result.getId()).isEqualTo(userId);
@@ -59,11 +62,26 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("assignUserToProject should throw UserNotInProjectException when requester not in project")
+    void assignUserToProject_throwsException_whenRequesterNotInProject() {
+        Long requesterId = 99L;
+
+        when(projectRepository.existsByIdAndUsers_Id(10L, requesterId)).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.assignUserToProject(1L, 10L, requesterId))
+                .isInstanceOf(UserNotInProjectException.class)
+                .hasMessageContaining("is not part of project ID: 10");
+    }
+
+    @Test
     @DisplayName("assignUserToProject should throw EntityNotFoundException when user not found")
     void assignUserToProject_throwsException_whenUserNotFound() {
+        Long requesterId = 99L;
+
+        when(projectRepository.existsByIdAndUsers_Id(10L, requesterId)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.assignUserToProject(1L, 10L))
+        assertThatThrownBy(() -> userService.assignUserToProject(1L, 10L, requesterId))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("User not found with ID: 1");
     }
@@ -71,11 +89,14 @@ class UserServiceImplTest {
     @Test
     @DisplayName("assignUserToProject should throw EntityNotFoundException when project not found")
     void assignUserToProject_throwsException_whenProjectNotFound() {
+        Long requesterId = 99L;
         User user = User.builder().id(1L).build();
+
+        when(projectRepository.existsByIdAndUsers_Id(10L, requesterId)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(projectRepository.findById(10L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.assignUserToProject(1L, 10L))
+        assertThatThrownBy(() -> userService.assignUserToProject(1L, 10L, requesterId))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Project not found with ID: 10");
     }
