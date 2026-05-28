@@ -3,6 +3,7 @@ package com.example.teamsprint.service.impl;
 import com.example.teamsprint.dto.AuthResponse;
 import com.example.teamsprint.dto.LoginRequest;
 import com.example.teamsprint.dto.RegisterRequest;
+import com.example.teamsprint.dto.RefreshTokenRequest;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.VerificationToken;
 import com.example.teamsprint.exception.AccountNotVerifiedException;
@@ -16,6 +17,9 @@ import com.example.teamsprint.repository.UserRepository;
 import com.example.teamsprint.repository.VerificationTokenRepository;
 import com.example.teamsprint.service.AuthService;
 import com.example.teamsprint.service.EmailService;
+import com.example.teamsprint.security.JwtService;
+import com.example.teamsprint.security.UserPrincipal;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final UserMapper userMapper;
     private final AuthMapper authMapper;
+    private final JwtService jwtService;
 
     @Transactional
     @Override
@@ -92,6 +97,33 @@ public class AuthServiceImpl implements AuthService {
         }
         if(!user.isEnabled()) {
             throw new AccountNotVerifiedException("Please verify your email before logging in.");
+        }
+
+        return authMapper.toAuthResponse(user);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public AuthResponse refresh(RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenRequest.getRefreshToken();
+        String email;
+        try {
+            email = jwtService.extractEmail(refreshToken);
+        }
+        catch(JwtException ex) {
+            throw new InvalidTokenException("Invalid refresh token.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+
+        if(!user.isEnabled()) {
+            throw new AccountNotVerifiedException("Please verify your email before refreshing token.");
+        }
+
+        UserPrincipal principal = new UserPrincipal(user);
+        if(!jwtService.validateToken(refreshToken, principal)) {
+            throw new InvalidTokenException("Invalid refresh token.");
         }
 
         return authMapper.toAuthResponse(user);

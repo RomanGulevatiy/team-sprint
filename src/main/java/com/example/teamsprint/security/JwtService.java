@@ -19,17 +19,28 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String JWT_SECRET;
 
-    @Value("${jwt.expiration}")
-    private String JWT_EXPIRATION;
+    @Value("${jwt.access-expiration}")
+    private String JWT_ACCESS_EXPIRATION;
 
-    public String generateToken(UserPrincipal user) {
+    @Value("${jwt.refresh-expiration}")
+    private String JWT_REFRESH_EXPIRATION;
+
+    public String generateAccessToken(UserPrincipal user) {
         Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, user.getUsername(), Long.parseLong(JWT_ACCESS_EXPIRATION));
+    }
 
+    public String generateRefreshToken(UserPrincipal user) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, user.getUsername(), Long.parseLong(JWT_REFRESH_EXPIRATION));
+    }
+
+    private String createToken(Map<String, Object> claims, String subject, Long expirationMillis) {
         return Jwts.builder()
                 .claims(claims)
-                .subject(user.getUsername())
+                .subject(subject)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + Long.parseLong(JWT_EXPIRATION)))
+                .expiration(new Date(System.currentTimeMillis() + expirationMillis))
                 .signWith(getSigningKey())
                 .compact();
     }

@@ -3,6 +3,7 @@ package com.example.teamsprint.controller;
 import com.example.teamsprint.dto.AuthResponse;
 import com.example.teamsprint.dto.LoginRequest;
 import com.example.teamsprint.dto.RegisterRequest;
+import com.example.teamsprint.dto.RefreshTokenRequest;
 import com.example.teamsprint.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,5 +46,11 @@ public class AuthController {
     public AuthResponse loginUser(@Valid @RequestBody LoginRequest loginRequest) {
         return authService.login(loginRequest);
     }
-}
 
+    @Operation(summary = "Refresh access token", description = "Issues a new access token using a valid refresh token")
+    @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.OK)
+    public AuthResponse refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return authService.refresh(refreshTokenRequest);
+    }
+}
