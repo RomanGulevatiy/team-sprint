@@ -7,6 +7,7 @@ import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.ProjectStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
+import com.example.teamsprint.mapper.ProjectMapper;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.UserRepository;
 import com.example.teamsprint.service.ProjectService;
@@ -31,6 +32,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final ProjectMapper projectMapper;
 
 
     @Transactional
@@ -39,17 +41,17 @@ public class ProjectServiceImpl implements ProjectService {
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new EntityNotFoundException("User not found with ID: " + userId));
 
-        Project project = mapToProjectEntity(projectRequest);
+        Project project = projectMapper.toEntity(projectRequest);
         Project savedProject = projectRepository.save(project);
 
-        if (user.getProjects() == null) {
+        if(user.getProjects() == null) {
             user.setProjects(new HashSet<>());
         }
         user.getProjects().add(savedProject);
         userRepository.save(user);
 
         log.info("Created new project with ID: {}", savedProject.getId());
-        return mapToProjectResponse(savedProject);
+        return projectMapper.toResponse(savedProject);
     }
 
     @Transactional
@@ -75,7 +77,7 @@ public class ProjectServiceImpl implements ProjectService {
         Page<Project> projectPage = projectRepository.findAll(spec, PageRequest.of(page, size));
 
         List<ProjectResponse> content = projectPage.getContent().stream()
-                .map(this::mapToProjectResponse)
+                .map(projectMapper::toResponse)
                 .toList();
 
         return PageResponse.<ProjectResponse>builder()
@@ -84,37 +86,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .pageSize(projectPage.getSize())
                 .totalElements(projectPage.getTotalElements())
                 .totalPages(projectPage.getTotalPages())
-                .build();
-    }
-
-    /**
-     * Helper method to map ProjectRequest DTO to Project entity
-     *
-     * @param projectRequest the ProjectRequest DTO to be mapped
-     * @return the corresponding Project entity
-     */
-    private Project mapToProjectEntity(ProjectRequest projectRequest) {
-        return Project.builder()
-                .title(projectRequest.getTitle())
-                .description(projectRequest.getDescription())
-                .status(projectRequest.getStatus())
-                .build();
-    }
-
-    /**
-     * Helper method to map Project entity to ProjectResponse DTO
-     *
-     * @param project the Project entity to be mapped
-     * @return the corresponding ProjectResponse DTO
-     */
-    private ProjectResponse mapToProjectResponse(Project project) {
-        return ProjectResponse.builder()
-                .id(project.getId())
-                .title(project.getTitle())
-                .description(project.getDescription())
-                .status(project.getStatus())
-                .createdAt(project.getCreatedAt())
-                .updatedAt(project.getUpdatedAt())
                 .build();
     }
 

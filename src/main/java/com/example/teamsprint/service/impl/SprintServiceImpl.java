@@ -8,6 +8,7 @@ import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.exception.UserNotInProjectException;
+import com.example.teamsprint.mapper.SprintMapper;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.service.SprintService;
@@ -30,6 +31,7 @@ public class SprintServiceImpl implements SprintService {
 
     private final ProjectRepository projectRepository;
     private final SprintRepository sprintRepository;
+    private final SprintMapper sprintMapper;
 
     @Transactional
     @Override
@@ -42,12 +44,12 @@ public class SprintServiceImpl implements SprintService {
             throw new UserNotInProjectException("User with ID: " + userId + " is not part of project ID: " + projectId);
         }
 
-        Sprint sprint = mapToSprintEntity(sprintRequest);
+        Sprint sprint = sprintMapper.toEntity(sprintRequest);
         sprint.setProject(project);
 
         Sprint savedSprint = sprintRepository.save(sprint);
         log.info("Created new sprint with ID: {}", savedSprint.getId());
-        return mapToSprintResponse(savedSprint);
+        return sprintMapper.toResponse(savedSprint);
     }
 
     @Transactional(readOnly = true)
@@ -77,7 +79,7 @@ public class SprintServiceImpl implements SprintService {
 
         Page<Sprint> sprintPage = sprintRepository.findAll(spec, PageRequest.of(page, size));
         List<SprintResponse> content = sprintPage.getContent().stream()
-                .map(this::mapToSprintResponse)
+                .map(sprintMapper::toResponse)
                 .toList();
 
         log.info("Retrieved {} sprints for project ID: {}", sprintPage.getNumberOfElements(), projectId);
@@ -90,39 +92,4 @@ public class SprintServiceImpl implements SprintService {
                 .build();
     }
 
-    /**
-     * Helper method to map SprintRequest DTO to Sprint entity
-     *
-     * @param sprintRequest the SprintRequest DTO to be mapped
-     * @return the corresponding Sprint entity
-     */
-    private Sprint mapToSprintEntity(SprintRequest sprintRequest) {
-        return Sprint.builder()
-                .title(sprintRequest.getTitle())
-                .description(sprintRequest.getDescription())
-                .status(sprintRequest.getStatus())
-                .startDate(sprintRequest.getStartDate())
-                .dueDate(sprintRequest.getDueDate())
-                .build();
-    }
-
-    /**
-     * Helper method to map Sprint entity to SprintResponse DTO
-     *
-     * @param sprint the Sprint entity to be mapped
-     * @return the corresponding SprintResponse DTO
-     */
-    private SprintResponse mapToSprintResponse(Sprint  sprint) {
-        return SprintResponse.builder()
-                .id(sprint.getId())
-                .title(sprint.getTitle())
-                .description(sprint.getDescription())
-                .status(sprint.getStatus())
-                .startDate(sprint.getStartDate())
-                .dueDate(sprint.getDueDate())
-                .projectId(sprint.getProject().getId())
-                .createdAt(sprint.getCreatedAt())
-                .updatedAt(sprint.getUpdatedAt())
-                .build();
-    }
 }

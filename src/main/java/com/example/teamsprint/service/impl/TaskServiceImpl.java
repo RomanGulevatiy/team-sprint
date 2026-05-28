@@ -10,6 +10,7 @@ import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.exception.UserNotInProjectException;
+import com.example.teamsprint.mapper.TaskMapper;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.repository.TaskRepository;
@@ -36,6 +37,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final TaskMapper taskMapper;
 
     @Transactional
     @Override
@@ -48,12 +50,12 @@ public class TaskServiceImpl implements TaskService {
         if(!projectRepository.existsByIdAndUsers_Id(projectId, userId)) {
             throw new UserNotInProjectException("User with ID: " + userId + " is not part of project ID: " + projectId);
         }
-        Task task = mapToTaskEntity(taskRequest);
+        Task task = taskMapper.toEntity(taskRequest);
         task.setSprint(sprint);
 
         Task savedTask = taskRepository.save(task);
         log.info("Created new task with ID: {}", savedTask.getId());
-        return mapToTaskResponse(savedTask);
+        return taskMapper.toResponse(savedTask);
     }
 
     @Transactional(readOnly = true)
@@ -88,7 +90,7 @@ public class TaskServiceImpl implements TaskService {
 
         Page<Task> taskPage = taskRepository.findAll(spec, PageRequest.of(page, size));
         List<TaskResponse> content = taskPage.getContent().stream()
-                .map(this::mapToTaskResponse)
+                .map(taskMapper::toResponse)
                 .toList();
 
         log.info("Retrieved {} tasks for sprint ID: {}", taskPage.getNumberOfElements(), sprintId);
@@ -123,41 +125,6 @@ public class TaskServiceImpl implements TaskService {
         task.setAssignee(user);
         Task updatedTask = taskRepository.save(task);
         log.info("Assigned task ID: {} to user ID: {}", taskId, userId);
-        return mapToTaskResponse(updatedTask);
-    }
-
-    /**
-     * Helper method to map TaskRequest DTO to Task entity
-     *
-     * @param taskRequest the TaskRequest DTO to be mapped
-     * @return the corresponding Task entity
-     */
-    private Task mapToTaskEntity(TaskRequest taskRequest) {
-        return Task.builder()
-                .title(taskRequest.getTitle())
-                .description(taskRequest.getDescription())
-                .priority(taskRequest.getPriority())
-                .status(taskRequest.getStatus())
-                .build();
-    }
-
-    /**
-     * Helper method to map Task entity to TaskResponse DTO
-     *
-     * @param task the Task entity to be mapped
-     * @return the corresponding TaskResponse DTO
-     */
-    private TaskResponse mapToTaskResponse(Task task) {
-        return TaskResponse.builder()
-                .id(task.getId())
-                .title(task.getTitle())
-                .description(task.getDescription())
-                .priority(task.getPriority())
-                .status(task.getStatus())
-                .sprintId(task.getSprint().getId())
-                .assigneeId(task.getAssignee() != null ? task.getAssignee().getId() : null)
-                .createdAt(task.getCreatedAt())
-                .updatedAt(task.getUpdatedAt())
-                .build();
+        return taskMapper.toResponse(updatedTask);
     }
 }
