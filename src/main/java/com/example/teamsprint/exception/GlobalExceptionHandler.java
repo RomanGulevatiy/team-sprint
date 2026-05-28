@@ -105,4 +105,15 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
     }
+
+    @ExceptionHandler(EmailPendingVerificationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleEmailPendingVerificationException(EmailPendingVerificationException exception) {
+        return ErrorResponse.builder()
+                .error("Email Pending Verification")
+                .status(HttpStatus.CONFLICT.value())
+                .message(exception.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
 }
