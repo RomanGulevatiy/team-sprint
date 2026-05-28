@@ -31,8 +31,8 @@ public class UnverifiedAccountCleanup {
                 .filter(user -> !user.isEnabled())
                 .toList();
 
-        if (!usersToDelete.isEmpty()) {
-            userRepository.deleteAll(usersToDelete); // CASCADE видалить токени
+        if(!usersToDelete.isEmpty()) {
+            userRepository.deleteAll(usersToDelete);
             log.info("Cleaned up {} unverified expired accounts", usersToDelete.size());
         }
     }
