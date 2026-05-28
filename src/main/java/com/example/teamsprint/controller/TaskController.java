@@ -1,8 +1,9 @@
 package com.example.teamsprint.controller;
 
-import com.example.teamsprint.dto.PageResponse;
-import com.example.teamsprint.dto.TaskRequest;
-import com.example.teamsprint.dto.TaskResponse;
+import com.example.teamsprint.dto.request.UpdateTaskRequest;
+import com.example.teamsprint.dto.response.PageResponse;
+import com.example.teamsprint.dto.request.TaskRequest;
+import com.example.teamsprint.dto.response.TaskResponse;
 import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
 import com.example.teamsprint.security.UserPrincipal;
@@ -56,5 +57,22 @@ public class TaskController {
                                    @PathVariable Long userId,
                                    @AuthenticationPrincipal UserPrincipal principal) {
         return taskService.assignTaskToUser(taskId, userId, principal.getId());
+    }
+
+    @Operation(summary = "Update a task", description = "Updates the details of an existing task")
+    @PatchMapping("/tasks/{taskId}")
+    @ResponseStatus(HttpStatus.OK)
+    public TaskResponse updateTask(@PathVariable Long taskId,
+                                   @AuthenticationPrincipal UserPrincipal principal,
+                                   @Valid @RequestBody UpdateTaskRequest request) {
+        return taskService.updateTask(taskId, request, principal.getId());
+    }
+
+    @Operation(summary = "Delete a task", description = "Deletes an existing task by its ID")
+    @DeleteMapping("/tasks/{taskId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTask(@PathVariable Long taskId,
+                           @AuthenticationPrincipal UserPrincipal principal) {
+        taskService.deleteTask(taskId, principal.getId());
     }
 }
