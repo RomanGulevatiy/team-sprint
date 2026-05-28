@@ -2,6 +2,7 @@ package com.example.teamsprint.controller;
 
 import com.example.teamsprint.dto.AuthResponse;
 import com.example.teamsprint.dto.LoginRequest;
+import com.example.teamsprint.dto.RefreshTokenRequest;
 import com.example.teamsprint.dto.RegisterRequest;
 import com.example.teamsprint.dto.UserResponse;
 import com.example.teamsprint.security.JwtService;
@@ -76,7 +77,7 @@ class AuthControllerTest {
                 .build();
         AuthResponse response = AuthResponse.builder()
                 .accessToken("token-456")
-                .refreshToken(null)
+                .refreshToken("refresh-456")
                 .user(user)
                 .build();
 
@@ -87,6 +88,37 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("token-456"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-456"))
+                .andExpect(jsonPath("$.user.id").value(1L))
+                .andExpect(jsonPath("$.user.username").value("john"))
+                .andExpect(jsonPath("$.user.email").value("john@mail.com"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh should return 200 OK with new tokens and user")
+    void refreshToken_returnsOk() throws Exception {
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken("refresh-abc")
+                .build();
+        UserResponse user = UserResponse.builder()
+                .id(1L)
+                .username("john")
+                .email("john@mail.com")
+                .build();
+        AuthResponse response = AuthResponse.builder()
+                .accessToken("token-789")
+                .refreshToken("refresh-789")
+                .user(user)
+                .build();
+
+        when(authService.refresh(any(RefreshTokenRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("token-789"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-789"))
                 .andExpect(jsonPath("$.user.id").value(1L))
                 .andExpect(jsonPath("$.user.username").value("john"))
                 .andExpect(jsonPath("$.user.email").value("john@mail.com"));

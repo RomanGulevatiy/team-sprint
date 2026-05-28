@@ -1,6 +1,5 @@
 package com.example.teamsprint.service.impl;
 
-import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.ProjectRequest;
 import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.Project;
@@ -23,7 +22,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
