@@ -119,13 +119,9 @@ public class TaskServiceImpl implements TaskService {
                     + " is not part of project ID: " + projectId);
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + userId));
-
-        if(!projectRepository.existsByIdAndUsers_Id(projectId, userId)) {
-            throw new UserNotInProjectException("User with ID: " + userId
-                    + " is not part of the project associated with this task.");
-        }
+        User user = userRepository.findByIdAndProjects_Id(userId, projectId)
+                .orElseThrow(() -> new UserNotInProjectException("User with ID: " + userId
+                        + " is not part of the project associated with this task."));
 
         task.setAssignee(user);
         Task updatedTask = taskRepository.save(task);
