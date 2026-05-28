@@ -2,11 +2,13 @@ package com.example.teamsprint.service.impl;
 
 import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.SprintRequest;
+import com.example.teamsprint.dto.SprintResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.enums.ProjectStatus;
 import com.example.teamsprint.entity.enums.SprintStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
+import com.example.teamsprint.mapper.SprintMapper;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.SprintRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -38,8 +40,25 @@ class SprintServiceImplTest {
     @Mock
     private SprintRepository sprintRepository;
 
+    @Mock
+    private SprintMapper sprintMapper;
+
     @InjectMocks
     private SprintServiceImpl sprintService;
+
+    private SprintResponse mapResponse(Sprint sprint) {
+        return SprintResponse.builder()
+                .id(sprint.getId())
+                .title(sprint.getTitle())
+                .description(sprint.getDescription())
+                .status(sprint.getStatus())
+                .startDate(sprint.getStartDate())
+                .dueDate(sprint.getDueDate())
+                .projectId(sprint.getProject().getId())
+                .createdAt(sprint.getCreatedAt())
+                .updatedAt(sprint.getUpdatedAt())
+                .build();
+    }
 
     @Test
     @DisplayName("createSprint throws EntityNotFoundException when project does not exist")
@@ -92,7 +111,9 @@ class SprintServiceImplTest {
 
         when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
         when(projectRepository.existsByIdAndUsers_Id(10L, 1L)).thenReturn(true);
+        when(sprintMapper.toEntity(any(SprintRequest.class))).thenReturn(Sprint.builder().build());
         when(sprintRepository.save(any(Sprint.class))).thenReturn(savedSprint);
+        when(sprintMapper.toResponse(savedSprint)).thenReturn(mapResponse(savedSprint));
 
         var result = sprintService.createSprint(10L, request, 1L);
 
@@ -136,7 +157,9 @@ class SprintServiceImplTest {
 
         when(projectRepository.findById(7L)).thenReturn(Optional.of(project));
         when(projectRepository.existsByIdAndUsers_Id(7L, 1L)).thenReturn(true);
+        when(sprintMapper.toEntity(any(SprintRequest.class))).thenReturn(Sprint.builder().build());
         when(sprintRepository.save(any(Sprint.class))).thenReturn(savedSprint);
+        when(sprintMapper.toResponse(savedSprint)).thenReturn(mapResponse(savedSprint));
 
         var result = sprintService.createSprint(7L, request, 1L);
 
@@ -202,6 +225,8 @@ class SprintServiceImplTest {
         when(projectRepository.existsByIdAndUsers_Id(12L, 1L)).thenReturn(true);
         when(sprintRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(sprint1, sprint2), PageRequest.of(0, 20), 2));
+        when(sprintMapper.toResponse(sprint1)).thenReturn(mapResponse(sprint1));
+        when(sprintMapper.toResponse(sprint2)).thenReturn(mapResponse(sprint2));
 
         var result = sprintService.getSprintsByProjectId(12L, null, 0, 20, 1L);
 

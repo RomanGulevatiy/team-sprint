@@ -2,6 +2,7 @@ package com.example.teamsprint.service.impl;
 
 import com.example.teamsprint.dto.PageResponse;
 import com.example.teamsprint.dto.TaskRequest;
+import com.example.teamsprint.dto.TaskResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.Sprint;
 import com.example.teamsprint.entity.Task;
@@ -11,6 +12,7 @@ import com.example.teamsprint.entity.enums.TaskPriority;
 import com.example.teamsprint.entity.enums.TaskStatus;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.exception.UserNotInProjectException;
+import com.example.teamsprint.mapper.TaskMapper;
 import com.example.teamsprint.repository.SprintRepository;
 import com.example.teamsprint.repository.TaskRepository;
 import com.example.teamsprint.repository.UserRepository;
@@ -51,8 +53,25 @@ class TaskServiceImplTest {
     @Mock
     private ProjectRepository projectRepository;
 
+    @Mock
+    private TaskMapper taskMapper;
+
     @InjectMocks
     private TaskServiceImpl taskService;
+
+    private TaskResponse mapResponse(Task task) {
+        return TaskResponse.builder()
+                .id(task.getId())
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .priority(task.getPriority())
+                .status(task.getStatus())
+                .sprintId(task.getSprint().getId())
+                .assigneeId(task.getAssignee() != null ? task.getAssignee().getId() : null)
+                .createdAt(task.getCreatedAt())
+                .updatedAt(task.getUpdatedAt())
+                .build();
+    }
 
     @Test
     @DisplayName("createTask throws EntityNotFoundException when sprint does not exist")
@@ -104,7 +123,9 @@ class TaskServiceImplTest {
 
         when(sprintRepository.findById(3L)).thenReturn(Optional.of(sprint));
         when(projectRepository.existsByIdAndUsers_Id(30L, 1L)).thenReturn(true);
+        when(taskMapper.toEntity(any(TaskRequest.class))).thenReturn(Task.builder().build());
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+        when(taskMapper.toResponse(savedTask)).thenReturn(mapResponse(savedTask));
 
         var result = taskService.createTask(3L, request, 1L);
 
@@ -147,7 +168,9 @@ class TaskServiceImplTest {
 
         when(sprintRepository.findById(9L)).thenReturn(Optional.of(sprint));
         when(projectRepository.existsByIdAndUsers_Id(90L, 1L)).thenReturn(true);
+        when(taskMapper.toEntity(any(TaskRequest.class))).thenReturn(Task.builder().build());
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+        when(taskMapper.toResponse(savedTask)).thenReturn(mapResponse(savedTask));
 
         var result = taskService.createTask(9L, request, 1L);
 
@@ -216,6 +239,8 @@ class TaskServiceImplTest {
         when(projectRepository.existsByIdAndUsers_Id(110L, 1L)).thenReturn(true);
         when(taskRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(task1, task2), PageRequest.of(0, 20), 2));
+        when(taskMapper.toResponse(task1)).thenReturn(mapResponse(task1));
+        when(taskMapper.toResponse(task2)).thenReturn(mapResponse(task2));
 
         var result = taskService.getTasksBySprintId(11L, null, null, 0, 20, 1L);
 
@@ -252,6 +277,7 @@ class TaskServiceImplTest {
         when(projectRepository.existsByIdAndUsers_Id(projectId, 1L)).thenReturn(true);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(taskMapper.toResponse(task)).thenReturn(mapResponse(task));
 
         taskService.assignTaskToUser(taskId, userId, 1L);
 

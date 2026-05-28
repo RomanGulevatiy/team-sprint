@@ -6,6 +6,7 @@ import com.example.teamsprint.dto.ProjectResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.ProjectStatus;
+import com.example.teamsprint.mapper.ProjectMapper;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.UserRepository;
 
@@ -41,6 +42,9 @@ class ProjectServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private ProjectMapper projectMapper;
+
     @InjectMocks
     private ProjectServiceImpl projectService;
 
@@ -48,6 +52,17 @@ class ProjectServiceImplTest {
         return User.builder()
                 .id(1L)
                 .projects(new HashSet<>())
+                .build();
+    }
+
+    private ProjectResponse mapResponse(Project project) {
+        return ProjectResponse.builder()
+                .id(project.getId())
+                .title(project.getTitle())
+                .description(project.getDescription())
+                .status(project.getStatus())
+                .createdAt(project.getCreatedAt())
+                .updatedAt(project.getUpdatedAt())
                 .build();
     }
 
@@ -73,7 +88,9 @@ class ProjectServiceImplTest {
         User user = buildUser();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(projectMapper.toEntity(any(ProjectRequest.class))).thenReturn(Project.builder().build());
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(projectMapper.toResponse(savedProject)).thenReturn(mapResponse(savedProject));
 
         var result = projectService.createProject(request, 1L);
 
@@ -104,7 +121,9 @@ class ProjectServiceImplTest {
         User user = buildUser();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(projectMapper.toEntity(any(ProjectRequest.class))).thenReturn(Project.builder().build());
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(projectMapper.toResponse(savedProject)).thenReturn(mapResponse(savedProject));
         when(userRepository.save(any(User.class))).thenReturn(user);
 
         projectService.createProject(request, 1L);
@@ -132,7 +151,9 @@ class ProjectServiceImplTest {
         User user = buildUser();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(projectMapper.toEntity(any(ProjectRequest.class))).thenReturn(Project.builder().build());
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(projectMapper.toResponse(savedProject)).thenReturn(mapResponse(savedProject));
 
         var result = projectService.createProject(request, 1L);
 
@@ -160,7 +181,9 @@ class ProjectServiceImplTest {
         User user = buildUser();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(projectMapper.toEntity(any(ProjectRequest.class))).thenReturn(Project.builder().build());
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(projectMapper.toResponse(savedProject)).thenReturn(mapResponse(savedProject));
 
         var result = projectService.createProject(request, 1L);
 
@@ -187,7 +210,9 @@ class ProjectServiceImplTest {
                     .status(status)
                     .build();
 
+            when(projectMapper.toEntity(any(ProjectRequest.class))).thenReturn(Project.builder().build());
             when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+            when(projectMapper.toResponse(savedProject)).thenReturn(mapResponse(savedProject));
 
             var result = projectService.createProject(request, 1L);
 
@@ -219,7 +244,9 @@ class ProjectServiceImplTest {
         User user = buildUser();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(projectMapper.toEntity(any(ProjectRequest.class))).thenReturn(Project.builder().build());
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(projectMapper.toResponse(savedProject)).thenReturn(mapResponse(savedProject));
 
         var result = projectService.createProject(request, 1L);
 
@@ -251,7 +278,9 @@ class ProjectServiceImplTest {
         User user = buildUser();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(projectMapper.toEntity(any(ProjectRequest.class))).thenReturn(Project.builder().build());
         when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+        when(projectMapper.toResponse(savedProject)).thenReturn(mapResponse(savedProject));
 
         var result = projectService.createProject(request, 1L);
 
@@ -279,6 +308,7 @@ class ProjectServiceImplTest {
         Page<Project> projectPage = new PageImpl<>(List.of(project), pageRequest, 1);
 
         when(projectRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(projectPage);
+        when(projectMapper.toResponse(project)).thenReturn(mapResponse(project));
 
         var result = projectService.getProjectsForUser(userId, null, null, 0, 5);
 
