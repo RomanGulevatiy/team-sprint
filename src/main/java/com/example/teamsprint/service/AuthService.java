@@ -1,9 +1,9 @@
 package com.example.teamsprint.service;
 
-import com.example.teamsprint.dto.AuthResponse;
-import com.example.teamsprint.dto.LoginRequest;
-import com.example.teamsprint.dto.RegisterRequest;
-import com.example.teamsprint.dto.RefreshTokenRequest;
+import com.example.teamsprint.dto.response.AuthResponse;
+import com.example.teamsprint.dto.request.LoginRequest;
+import com.example.teamsprint.dto.request.RegisterRequest;
+import com.example.teamsprint.dto.request.RefreshTokenRequest;
 
 public interface AuthService {
 

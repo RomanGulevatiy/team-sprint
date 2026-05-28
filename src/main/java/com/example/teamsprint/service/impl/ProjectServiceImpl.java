@@ -1,8 +1,8 @@
 package com.example.teamsprint.service.impl;
 
-import com.example.teamsprint.dto.PageResponse;
-import com.example.teamsprint.dto.ProjectRequest;
-import com.example.teamsprint.dto.ProjectResponse;
+import com.example.teamsprint.dto.response.PageResponse;
+import com.example.teamsprint.dto.request.ProjectRequest;
+import com.example.teamsprint.dto.response.ProjectResponse;
 import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.enums.ProjectStatus;
