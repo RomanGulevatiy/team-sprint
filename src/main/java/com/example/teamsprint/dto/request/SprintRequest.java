@@ -21,7 +21,7 @@ public class SprintRequest {
     @Size(min = 1, max = 100, message = "Title must be between {min} and {max} characters")
     private String title;
 
-    @Size(max = 500, message = "Description cannot exceed {max} characters")
+    @Size(max = 255, message = "Description cannot exceed {max} characters")
     private String description;
 
     @NotNull(message = "Status cannot be null")
