@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,7 +78,8 @@ public class SprintServiceImpl implements SprintService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Page<Sprint> sprintPage = sprintRepository.findAll(spec, PageRequest.of(page, size));
+        Page<Sprint> sprintPage = sprintRepository.findAll(spec,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "startDate")));
         List<SprintResponse> content = sprintPage.getContent().stream()
                 .map(sprintMapper::toResponse)
                 .toList();
