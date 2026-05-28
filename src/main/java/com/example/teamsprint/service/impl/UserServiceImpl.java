@@ -5,6 +5,7 @@ import com.example.teamsprint.entity.Project;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.exception.EntityNotFoundException;
 import com.example.teamsprint.exception.UserAlreadyInProjectException;
+import com.example.teamsprint.exception.UserNotInProjectException;
 import com.example.teamsprint.mapper.UserMapper;
 import com.example.teamsprint.repository.ProjectRepository;
 import com.example.teamsprint.repository.UserRepository;
@@ -25,7 +26,11 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public UserResponse assignUserToProject(Long userId, Long projectId) {
+    public UserResponse assignUserToProject(Long userId, Long projectId, Long requesterId) {
+        if(!projectRepository.existsByIdAndUsers_Id(projectId, requesterId)) {
+            throw new UserNotInProjectException("User with ID: " + requesterId + " is not part of project ID: " + projectId);
+        }
+
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new EntityNotFoundException("User not found with ID: " + userId));
 
