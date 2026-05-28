@@ -1,6 +1,6 @@
-package com.example.teamsprint.dto;
+package com.example.teamsprint.dto.request;
 
-import com.example.teamsprint.entity.enums.SprintStatus;
+import com.example.teamsprint.entity.enums.ProjectStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,13 +9,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SprintRequest {
+public class ProjectRequest {
 
     @NotBlank(message = "Title cannot be null")
     @Size(min = 1, max = 100, message = "Title must be between {min} and {max} characters")
@@ -25,9 +23,5 @@ public class SprintRequest {
     private String description;
 
     @NotNull(message = "Status cannot be null")
-    private SprintStatus status;
-
-    private LocalDateTime startDate;
-
-    private LocalDateTime dueDate;
+    private ProjectStatus status;
 }

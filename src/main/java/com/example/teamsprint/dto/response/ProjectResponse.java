@@ -1,6 +1,6 @@
-package com.example.teamsprint.dto;
+package com.example.teamsprint.dto.response;
 
-import com.example.teamsprint.entity.enums.SprintStatus;
+import com.example.teamsprint.entity.enums.ProjectStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,15 +12,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SprintResponse {
+public class ProjectResponse {
 
     private Long id;
     private String title;
     private String description;
-    private SprintStatus status;
-    private LocalDateTime startDate;
-    private LocalDateTime dueDate;
-    private Long projectId;
+    private ProjectStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

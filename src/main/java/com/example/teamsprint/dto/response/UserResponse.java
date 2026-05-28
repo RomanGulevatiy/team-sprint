@@ -1,4 +1,4 @@
-package com.example.teamsprint.dto;
+package com.example.teamsprint.dto.response;
 
 import com.example.teamsprint.entity.enums.UserRole;
 import lombok.AllArgsConstructor;
