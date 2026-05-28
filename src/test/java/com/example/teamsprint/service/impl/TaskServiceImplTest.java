@@ -275,7 +275,7 @@ class TaskServiceImplTest {
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(projectRepository.existsByIdAndUsers_Id(projectId, 1L)).thenReturn(true);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndProjects_Id(userId, projectId)).thenReturn(Optional.of(user));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(taskMapper.toResponse(task)).thenReturn(mapResponse(task));
 
@@ -298,7 +298,7 @@ class TaskServiceImplTest {
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(projectRepository.existsByIdAndUsers_Id(1L, 1L)).thenReturn(true);
-        when(userRepository.findById(10L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdAndProjects_Id(10L, 1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> taskService.assignTaskToUser(1L, 10L, 1L))
                 .isInstanceOf(UserNotInProjectException.class)
