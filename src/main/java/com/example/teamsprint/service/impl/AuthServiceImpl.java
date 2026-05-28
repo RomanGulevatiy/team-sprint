@@ -6,11 +6,7 @@ import com.example.teamsprint.dto.RegisterRequest;
 import com.example.teamsprint.dto.RefreshTokenRequest;
 import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.VerificationToken;
-import com.example.teamsprint.exception.AccountNotVerifiedException;
-import com.example.teamsprint.exception.EmailAlreadyExistsException;
-import com.example.teamsprint.exception.EntityNotFoundException;
-import com.example.teamsprint.exception.InvalidPasswordException;
-import com.example.teamsprint.exception.InvalidTokenException;
+import com.example.teamsprint.exception.*;
 import com.example.teamsprint.mapper.AuthMapper;
 import com.example.teamsprint.mapper.UserMapper;
 import com.example.teamsprint.repository.UserRepository;
@@ -27,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -45,9 +42,27 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @Override
     public AuthResponse register(RegisterRequest registerRequest) {
-        if(userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
-            log.warn("Attempted to register with already used email: {}", registerRequest.getEmail());
-            throw new EmailAlreadyExistsException("Email already in use: " + registerRequest.getEmail());
+        Optional<User> optionalUser = userRepository.findByEmail(registerRequest.getEmail());
+
+        if(optionalUser.isPresent()) {
+            User existingUser = optionalUser.get();
+
+            if(existingUser.isEnabled()) {
+                log.warn("Attempted to register with already verified email: {}", registerRequest.getEmail());
+                throw new EmailAlreadyExistsException("Email already in use: " + registerRequest.getEmail());
+            }
+
+            Optional<VerificationToken> existingToken = verificationTokenRepository.findByUser(existingUser);
+
+            if(existingToken.isPresent() && !existingToken.get().isExpired()) {
+                log.warn("Attempted to register with expired token: {}", registerRequest.getEmail());
+                throw new EmailPendingVerificationException(
+                        "This email is already registered but not verified. Please check your inbox or wait for the link to expire.");
+            }
+
+            log.info("Attempting to register with email: {}", registerRequest.getEmail());
+            userRepository.delete(existingUser);
+            userRepository.flush();
         }
 
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
