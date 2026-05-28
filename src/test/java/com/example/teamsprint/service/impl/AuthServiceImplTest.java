@@ -9,6 +9,7 @@ import com.example.teamsprint.entity.User;
 import com.example.teamsprint.entity.VerificationToken;
 import com.example.teamsprint.exception.AccountNotVerifiedException;
 import com.example.teamsprint.exception.EmailAlreadyExistsException;
+import com.example.teamsprint.exception.EmailPendingVerificationException;
 import com.example.teamsprint.exception.InvalidTokenException;
 import com.example.teamsprint.mapper.AuthMapper;
 import com.example.teamsprint.mapper.UserMapper;
@@ -107,11 +108,66 @@ class AuthServiceImplTest {
     @DisplayName("register should throw EmailAlreadyExistsException when email is already used")
     void register_throwsException_whenEmailAlreadyExists() {
         RegisterRequest request = new RegisterRequest("testuser", "test@mail.com", "pass123");
-        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(new User()));
+        when(userRepository.findByEmail(request.getEmail()))
+                .thenReturn(Optional.of(User.builder().enabled(true).build()));
 
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(EmailAlreadyExistsException.class)
                 .hasMessageContaining("Email already in use: test@mail.com");
+    }
+
+    @Test
+    @DisplayName("register should throw EmailPendingVerificationException when token is still active")
+    void register_throwsEmailPendingVerificationException_whenTokenActive() {
+        RegisterRequest request = new RegisterRequest("user2", "same@mail.com", "pass123");
+        User unverifiedUser = User.builder()
+                .id(1L)
+                .email("same@mail.com")
+                .enabled(false)
+                .build();
+        VerificationToken activeToken = VerificationToken.builder()
+                .token("active-token")
+                .user(unverifiedUser)
+                .expiresAt(LocalDateTime.now().plusHours(12)) // ще не прострочений
+                .build();
+
+        when(userRepository.findByEmail("same@mail.com")).thenReturn(Optional.of(unverifiedUser));
+        when(verificationTokenRepository.findByUser(unverifiedUser)).thenReturn(Optional.of(activeToken));
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(EmailPendingVerificationException.class)
+                .hasMessageContaining("not verified");
+    }
+
+    @Test
+    @DisplayName("register should delete expired unverified account and register new user")
+    void register_deletesExpiredUnverifiedAccount_andRegistersNewUser() {
+        RegisterRequest request = new RegisterRequest("user2", "same@mail.com", "pass123");
+        User unverifiedUser = User.builder()
+                .id(1L)
+                .email("same@mail.com")
+                .enabled(false)
+                .build();
+        VerificationToken expiredToken = VerificationToken.builder()
+                .token("expired-token")
+                .user(unverifiedUser)
+                .expiresAt(LocalDateTime.now().minusHours(1)) // прострочений
+                .build();
+        User newUser = User.builder().id(2L).username("user2").email("same@mail.com").build();
+        String encoded = "encoded";
+
+        when(userRepository.findByEmail("same@mail.com")).thenReturn(Optional.of(unverifiedUser));
+        when(verificationTokenRepository.findByUser(unverifiedUser)).thenReturn(Optional.of(expiredToken));
+        when(passwordEncoder.encode(request.getPassword())).thenReturn(encoded);
+        when(userMapper.toEntity(request, encoded)).thenReturn(newUser);
+        when(userRepository.save(any())).thenReturn(newUser);
+        when(authMapper.toRegistrationResponse(newUser)).thenReturn(AuthResponse.builder().build());
+
+        authService.register(request);
+
+        verify(userRepository).delete(unverifiedUser);
+        verify(userRepository).flush();
+        verify(emailService).sendVerificationEmail(eq("same@mail.com"), any(), any());
     }
 
     @Test
